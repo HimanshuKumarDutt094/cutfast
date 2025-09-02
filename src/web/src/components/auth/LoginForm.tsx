@@ -1,5 +1,7 @@
 "use client";
 
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useForm } from "react-hook-form";
 import { Button } from "@/components/ui/button";
 import {
   Form,
@@ -12,8 +14,6 @@ import {
 import { Input } from "@/components/ui/input";
 import { authClient } from "@/lib/auth-client";
 import { type LoginFormData, loginSchema } from "@/zod/auth";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { useForm } from "react-hook-form";
 
 export function LoginForm() {
   const form = useForm<LoginFormData>({
@@ -39,7 +39,7 @@ export function LoginForm() {
         // Redirect or handle success
         window.location.href = "/dashboard";
       }
-    } catch (err) {
+    } catch (_err) {
       form.setError("root", {
         message: "An error occurred during sign in",
       });
