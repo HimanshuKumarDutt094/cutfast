@@ -1,0 +1,65 @@
+export default {
+	name: "CutFast - Text Shortcuts",
+	description: "Local-first text shortcut platform for instant text expansion",
+	version: "1.0.0",
+	manifest_version: 3,
+
+	permissions: [
+		"storage",
+		"activeTab",
+		"commands",
+	],
+
+	host_permissions: [
+		"http://localhost:3000/*",
+		"https://*/*",
+	],
+
+	background: {
+		service_worker: "src/background/background.ts",
+		type: "module",
+	},
+
+	content_scripts: [
+		{
+			matches: ["<all_urls>"],
+			js: ["src/content-scripts/content.ts"],
+			run_at: "document_start",
+		},
+	],
+
+	action: {
+		default_popup: "src/ui/popup.html",
+		default_title: "CutFast",
+		default_icon: {
+			16: "src/assets/icon-16.png",
+			32: "src/assets/icon-32.png",
+			48: "src/assets/icon-48.png",
+			128: "src/assets/icon-128.png",
+		},
+	},
+
+	commands: {
+		"trigger-autocomplete": {
+			suggested_key: {
+				default: "Ctrl+Shift+Space",
+				mac: "Command+Shift+Space",
+			},
+			description: "Trigger text expansion autocomplete",
+		},
+	},
+
+	icons: {
+		16: "src/assets/icon-16.png",
+		32: "src/assets/icon-32.png",
+		48: "src/assets/icon-48.png",
+		128: "src/assets/icon-128.png",
+	},
+
+	web_accessible_resources: [
+		{
+			resources: ["src/ui/*"],
+			matches: ["<all_urls>"],
+		},
+	],
+};
