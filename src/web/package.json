@@ -3,6 +3,8 @@
   "version": "0.1.0",
   "private": true,
   "type": "module",
+  "author": "Himanshu Kumar Dutt",
+  "license": "MIT",
   "scripts": {
     "build": "next build",
     "check": "biome check .",

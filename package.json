@@ -7,8 +7,8 @@
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [],
-  "author": "",
-  "license": "ISC",
+  "author": "Himanshu Kumar Dutt",
+  "license": "MIT",
   "packageManager": "pnpm@10.11.1",
   "devDependencies": {
     "@biomejs/biome": "2.2.0"
