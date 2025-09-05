@@ -1,38 +1,52 @@
 import browser from "webextension-polyfill";
 import { cutfastDb } from "../lib/database";
 
-// Background service worker for CutFast extension
-// Handles PGlite, ElectricSQL sync, authentication, and message handling
-
 class CutFastBackground {
 	private isAuthenticated = false;
+	private syncInterval: NodeJS.Timeout | null = null;
+	private isInitialized = false;
+	private initializationPromise: Promise<void> | null = null;
 
 	constructor() {
 		this.init();
 	}
 
 	private async init() {
-		console.log("CutFast background service worker initialized");
+		// Prevent multiple initializations
+		if (this.initializationPromise) {
+			return this.initializationPromise;
+		}
 
-		// Initialize PGlite database
-		await this.initDatabase();
-
-		// Set up message listeners
-		this.setupMessageListeners();
-
-		// Set up command listeners
-		this.setupCommandListeners();
-
-		// Check for existing authentication
-		await this.checkAuthentication();
+		this.initializationPromise = this.performInit();
+		return this.initializationPromise;
 	}
 
-	private async initDatabase() {
+	private async performInit() {
+		console.log("CutFast background service worker initialized");
+
 		try {
+			// Initialize database first
 			await cutfastDb.initialize();
-			console.log("Database initialized successfully");
+			this.isInitialized = true;
+
+			// Set up message listeners
+			this.setupMessageListeners();
+
+			// Set up command listeners  
+			this.setupCommandListeners();
+
+			// Check for existing authentication
+			await this.checkAuthentication();
+
+			// Start periodic sync
+			this.startPeriodicSync();
+
+			console.log("Background service worker initialization complete");
 		} catch (error) {
-			console.error("Failed to initialize database:", error);
+			console.error("Failed to initialize background service:", error);
+			this.isInitialized = false;
+			this.initializationPromise = null; // Allow retry
+			throw error;
 		}
 	}
 
@@ -41,13 +55,25 @@ class CutFastBackground {
 			async (message: any, sender: any) => {
 				console.log("Received message:", message);
 
-				switch (message.type) {
-					case "QUERY_SHORTCUT":
-						return await this.handleShortcutQuery(message.payload);
-					case "TRIGGER_AUTOCOMPLETE":
-						return await this.handleAutocompleteTrigger(sender);
-					default:
-						console.warn("Unknown message type:", message.type);
+				try {
+					// Ensure we're initialized before handling any messages
+					await this.ensureInitialized();
+
+					switch (message.type) {
+						case "QUERY_SHORTCUT":
+							return await this.handleShortcutQuery(message.payload);
+						case "TRIGGER_AUTOCOMPLETE":
+							return await this.handleAutocompleteTrigger(sender);
+						default:
+							console.warn("Unknown message type:", message.type);
+							return { success: false, error: "Unknown message type" };
+					}
+				} catch (error) {
+					console.error("Error handling message:", error);
+					return { 
+						success: false, 
+						error: error instanceof Error ? error.message : "Unknown error" 
+					};
 				}
 			}
 		);
@@ -63,76 +89,90 @@ class CutFastBackground {
 		});
 	}
 
+	private async ensureInitialized(): Promise<void> {
+		if (this.isInitialized) {
+			return;
+		}
+
+		console.log("Service worker not initialized, initializing...");
+		await this.init();
+	}
+
 	private async checkAuthentication() {
 		try {
-			// Check for stored tokens
 			const result = await browser.storage.local.get(["accessToken", "refreshToken"]);
 
 			if (result.accessToken) {
 				this.isAuthenticated = true;
-				// TODO: Validate token and refresh if needed
 				console.log("User is authenticated");
 			} else {
+				this.isAuthenticated = false;
 				console.log("User is not authenticated");
 			}
-		} catch (error) {
+		} catch (error: unknown) {
+			this.isAuthenticated = false;
 			console.error("Failed to check authentication:", error);
 		}
 	}
 
 	private async handleShortcutQuery(payload: { key: string }) {
 		try {
-			if (!this.isAuthenticated) {
-				return { success: false, error: "Not authenticated" };
-			}
+			// Ensure we're properly initialized
+			await this.ensureInitialized();
 
-			if (!cutfastDb.isReady) {
-				return { success: false, error: "Database not ready" };
-			}
+			// Ensure database connection is active (critical for service workers)
+			await cutfastDb.ensureOpen();
 
-			console.log("Querying shortcut:", payload.key);
-
-			// Query the database for the shortcut
 			const shortcut = await cutfastDb.getShortcut(payload.key);
-
-			if (shortcut) {
-				return {
-					success: true,
-					data: {
-						key: payload.key,
-						content: shortcut.content,
-						id: shortcut.id,
-					},
-				};
-			} else {
-				return {
-					success: true,
-					data: null, // No shortcut found
-				};
-			}
-		} catch (error) {
+			
+			console.log(`Shortcut query for "${payload.key}":`, shortcut ? "found" : "not found");
+			
+			return { success: true, data: shortcut };
+		} catch (error: unknown) {
 			console.error("Failed to query shortcut:", error);
-			return { success: false, error: (error as Error).message };
+			
+			// Try to recover from database connection issues
+			if (error instanceof Error && error.message.includes("Database")) {
+				try {
+					console.log("Attempting database recovery...");
+					await cutfastDb.initialize();
+					await cutfastDb.ensureOpen();
+					
+					const shortcut = await cutfastDb.getShortcut(payload.key);
+					console.log("Database recovery successful");
+					
+					return { success: true, data: shortcut };
+				} catch (recoveryError) {
+					console.error("Database recovery failed:", recoveryError);
+					return { 
+						success: false, 
+						error: "Database connection failed. Please reload the extension." 
+					};
+				}
+			}
+			
+			return { 
+				success: false, 
+				error: error instanceof Error ? error.message : "Unknown error" 
+			};
 		}
 	}
 
 	private async handleAutocompleteTrigger(sender: any) {
 		try {
-			// Send message to content script to trigger autocomplete
 			await browser.tabs.sendMessage(sender.tab.id, {
 				type: "TRIGGER_AUTOCOMPLETE",
 			});
 
 			return { success: true };
-		} catch (error) {
+		} catch (error: unknown) {
 			console.error("Failed to trigger autocomplete:", error);
-			return { success: false, error: error.message };
+			return { success: false, error: error instanceof Error ? error.message : "Unknown error" };
 		}
 	}
 
 	private async handleAutocompleteCommand() {
 		try {
-			// Get active tab
 			const tabs = await browser.tabs.query({ active: true, currentWindow: true });
 
 			if (tabs[0]) {
@@ -140,18 +180,17 @@ class CutFastBackground {
 					type: "TRIGGER_AUTOCOMPLETE",
 				});
 			}
-		} catch (error) {
+		} catch (error: unknown) {
 			console.error("Failed to handle autocomplete command:", error);
 		}
 	}
 
-	// Public methods for external access
 	public async authenticate(tokens: { accessToken: string; refreshToken: string }) {
 		try {
 			await browser.storage.local.set(tokens);
 			this.isAuthenticated = true;
 			console.log("Authentication successful");
-		} catch (error) {
+		} catch (error: unknown) {
 			console.error("Failed to store authentication tokens:", error);
 		}
 	}
@@ -161,14 +200,83 @@ class CutFastBackground {
 			await browser.storage.local.remove(["accessToken", "refreshToken"]);
 			this.isAuthenticated = false;
 			console.log("Logged out successfully");
-		} catch (error) {
+		} catch (error: unknown) {
 			console.error("Failed to logout:", error);
 		}
+	}
+
+	private startPeriodicSync() {
+		// Clear any existing interval
+		if (this.syncInterval) {
+			clearInterval(this.syncInterval);
+		}
+
+		// Sync every 5 minutes
+		this.syncInterval = setInterval(() => {
+			this.syncWithServer();
+		}, 5 * 60 * 1000);
+
+		// Initial sync
+		this.syncWithServer();
+	}
+
+	private async syncWithServer() {
+		if (!this.isAuthenticated) {
+			console.log("Skipping sync - user not authenticated");
+			return;
+		}
+
+		try {
+			console.log("Starting sync with server...");
+
+			const storage = await browser.storage.local.get(["lastSyncTimestamp"]);
+			const lastSync = storage.lastSyncTimestamp ? new Date(storage.lastSyncTimestamp as string) : new Date(0);
+
+			const response = await fetch(`${process.env.VITE_API_URL || 'http://localhost:3000'}/api/trpc/shortcuts.updatedSince`, {
+				method: 'POST',
+				headers: {
+					'Content-Type': 'application/json',
+					'Authorization': `Bearer ${(await browser.storage.local.get(['accessToken'])).accessToken}`,
+				},
+				body: JSON.stringify({
+					json: {
+						since: lastSync.toISOString(),
+					},
+				}),
+			});
+
+			if (!response.ok) {
+				throw new Error(`HTTP error! status: ${response.status}`);
+			}
+
+			const data = await response.json();
+			const updatedShortcuts = data.result.data || [];
+
+			if (updatedShortcuts.length > 0) {
+				// Ensure database is ready before bulk upsert
+				await this.ensureInitialized();
+				await cutfastDb.ensureOpen();
+				
+				const upserted = await cutfastDb.bulkUpsertShortcuts(updatedShortcuts);
+				console.log(`Synced ${upserted} shortcuts from server`);
+			}
+
+			await browser.storage.local.set({
+				lastSyncTimestamp: new Date().toISOString(),
+			});
+
+			console.log("Sync completed successfully");
+		} catch (error) {
+			console.error("Failed to sync with server:", error);
+		}
+	}
+
+	public async forceSync() {
+		await this.syncWithServer();
 	}
 }
 
 // Initialize the background service
 const cutfastBackground = new CutFastBackground();
 
-// Export for potential use by other parts of the extension
 export default cutfastBackground;

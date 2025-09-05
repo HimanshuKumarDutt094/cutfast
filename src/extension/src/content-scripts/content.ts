@@ -1,35 +1,26 @@
 import browser from "webextension-polyfill";
 
-// Content script for CutFast extension
-// Handles pattern detection, DOM interactions, and text expansion
-
 class CutFastContentScript {
 	private currentInput: HTMLInputElement | HTMLTextAreaElement | null = null;
 	private currentTrigger = "";
 	private previewElement: HTMLElement | null = null;
+	private retryCount = 0;
+	private maxRetries = 3;
 
 	constructor() {
 		this.init();
 	}
 
-	private init() {
+	private async init() {
 		console.log("CutFast content script initialized");
 
-		// Set up event listeners
 		this.setupEventListeners();
-
-		// Listen for messages from background script
 		this.setupMessageListeners();
 	}
 
 	private setupEventListeners() {
-		// Listen for input events on all input elements
-		document.addEventListener("input", this.handleInput.bind(this), true);
-
-		// Listen for keydown events for autocomplete trigger
+		document.addEventListener("input", this.handleInput.bind(this) as EventListener, true);
 		document.addEventListener("keydown", this.handleKeydown.bind(this), true);
-
-		// Listen for focus events to track current input
 		document.addEventListener("focus", this.handleFocus.bind(this), true);
 		document.addEventListener("blur", this.handleBlur.bind(this), true);
 	}
@@ -54,7 +45,7 @@ class CutFastContentScript {
 		const target = event.target as HTMLElement;
 
 		if (this.isTextInput(target)) {
-			this.currentInput = target;
+			this.currentInput = target as HTMLInputElement | HTMLTextAreaElement;
 			console.log("Focused on input element:", target);
 		}
 	}
@@ -80,7 +71,6 @@ class CutFastContentScript {
 		const value = input.value;
 		const cursorPosition = input.selectionStart || 0;
 
-		// Check for trigger pattern
 		const triggerMatch = this.detectTrigger(value, cursorPosition);
 
 		if (triggerMatch) {
@@ -100,20 +90,17 @@ class CutFastContentScript {
 			return;
 		}
 
-		// Handle Tab key for autocomplete
 		if (event.key === "Tab" && this.currentTrigger && this.previewElement) {
 			event.preventDefault();
 			this.applyAutocomplete(target as HTMLInputElement | HTMLTextAreaElement);
 		}
 
-		// Handle Escape key to dismiss preview
 		if (event.key === "Escape" && this.previewElement) {
 			this.removePreview();
 		}
 	}
 
 	private detectTrigger(value: string, cursorPosition: number): { trigger: string; start: number; end: number } | null {
-		// Look for pattern like "/shortcut" before cursor
 		const beforeCursor = value.substring(0, cursorPosition);
 		const triggerRegex = /(\/\w+)$/;
 		const match = beforeCursor.match(triggerRegex);
@@ -123,34 +110,64 @@ class CutFastContentScript {
 			const start = match.index!;
 			const end = start + trigger.length;
 
-			return {
-				trigger,
-				start,
-				end,
-			};
+			return { trigger, start, end };
 		}
 
 		return null;
 	}
 
 	private async queryShortcut(trigger: string) {
-		try {
-			const response = await browser.runtime.sendMessage({
+		await this.sendMessageWithRetry(
+			{
 				type: "QUERY_SHORTCUT",
-				payload: { key: trigger.substring(1) }, // Remove the leading "/"
-			});
-
-			if (response.success && response.data) {
-				console.log("Shortcut found:", response.data);
-				// Update preview with actual content
-				this.updatePreview(response.data.content);
-			} else {
-				console.log("Shortcut not found or error:", response.error);
-				this.updatePreview("No shortcut found");
+				payload: { key: trigger }
+			},
+			(response) => {
+				if (response && response.success && response.data) {
+					console.log("Shortcut found:", response.data);
+					this.updatePreview(response.data.content);
+				} else {
+					console.log("Shortcut not found");
+					this.updatePreview("No shortcut found");
+				}
 			}
+		);
+	}
+
+	private async sendMessageWithRetry(message: any, onSuccess: (response: any) => void, attempt: number = 1): Promise<void> {
+		try {
+			// Check extension context
+			if (!browser.runtime?.id) {
+				console.warn("Extension context invalidated");
+				this.updatePreview("Extension disconnected");
+				return;
+			}
+
+			const response = await browser.runtime.sendMessage(message);
+			
+			// Reset retry count on success
+			this.retryCount = 0;
+			onSuccess(response);
+			
 		} catch (error) {
-			console.error("Failed to query shortcut:", error);
-			this.updatePreview("Error loading shortcut");
+			console.error(`Message attempt ${attempt} failed:`, error);
+			
+			// Handle extension context invalidation specifically
+			if (error instanceof Error && error.message.includes("Extension context invalidated")) {
+				if (attempt < this.maxRetries) {
+					console.log(`Retrying message in ${attempt * 1000}ms... (attempt ${attempt + 1}/${this.maxRetries})`);
+					this.updatePreview(`Reconnecting... (${attempt}/${this.maxRetries})`);
+					
+					setTimeout(() => {
+						this.sendMessageWithRetry(message, onSuccess, attempt + 1);
+					}, attempt * 1000); // Exponential backoff
+				} else {
+					console.error("Max retries exceeded. Extension needs reload.");
+					this.updatePreview("Extension needs reload");
+				}
+			} else {
+				this.updatePreview("Error loading shortcut");
+			}
 		}
 	}
 
@@ -159,7 +176,6 @@ class CutFastContentScript {
 			this.removePreview();
 		}
 
-		// Create preview element
 		this.previewElement = document.createElement("div");
 		this.previewElement.className = "cutfast-preview";
 		this.previewElement.style.cssText = `
@@ -174,19 +190,33 @@ class CutFastContentScript {
 			z-index: 10000;
 			max-width: 300px;
 			word-wrap: break-word;
+			box-shadow: 0 2px 8px rgba(0,0,0,0.15);
 		`;
 
 		this.previewElement.textContent = "Loading...";
-
-		// Position the preview
 		this.positionPreview(input, triggerMatch);
-
 		document.body.appendChild(this.previewElement);
 	}
 
 	private updatePreview(content: string) {
 		if (this.previewElement) {
 			this.previewElement.textContent = content;
+			
+			// Change styling based on content type
+			if (content.includes("Error") || content.includes("Extension")) {
+				this.previewElement.style.backgroundColor = "#fff3cd";
+				this.previewElement.style.borderColor = "#ffeaa7";
+				this.previewElement.style.color = "#856404";
+			} else if (content === "Loading..." || content.includes("Reconnecting")) {
+				this.previewElement.style.backgroundColor = "#e3f2fd";
+				this.previewElement.style.borderColor = "#90caf9";
+				this.previewElement.style.color = "#1565c0";
+			} else {
+				// Success styling
+				this.previewElement.style.backgroundColor = "#f8f9fa";
+				this.previewElement.style.borderColor = "#dee2e6";
+				this.previewElement.style.color = "#6c757d";
+			}
 		}
 	}
 
@@ -194,17 +224,14 @@ class CutFastContentScript {
 		if (!this.previewElement) return;
 
 		const inputRect = input.getBoundingClientRect();
-
-		// Get cursor position (approximate)
 		const textBeforeTrigger = input.value.substring(0, triggerMatch.start);
 		const approximateCursorX = this.getTextWidth(textBeforeTrigger, input);
 
 		this.previewElement.style.left = `${inputRect.left + approximateCursorX}px`;
-		this.previewElement.style.top = `${inputRect.top - 40}px`; // Position above input
+		this.previewElement.style.top = `${inputRect.top - 40}px`;
 	}
 
 	private getTextWidth(text: string, input: HTMLInputElement | HTMLTextAreaElement): number {
-		// Create a temporary span to measure text width
 		const span = document.createElement("span");
 		span.style.cssText = `
 			position: absolute;
@@ -231,44 +258,52 @@ class CutFastContentScript {
 	}
 
 	private async triggerAutocomplete() {
-		if (this.currentInput && this.currentTrigger) {
-			await this.applyAutocomplete(this.currentInput);
+		try {
+			if (!browser.runtime?.id) {
+				console.warn("Extension context invalidated during trigger");
+				return;
+			}
+
+			if (this.currentInput && this.currentTrigger) {
+				await this.applyAutocomplete(this.currentInput);
+			}
+		} catch (error) {
+			console.error("Failed to trigger autocomplete:", error);
 		}
 	}
 
 	private async applyAutocomplete(input: HTMLInputElement | HTMLTextAreaElement) {
-		try {
-			// Get the expanded content
-			const response = await browser.runtime.sendMessage({
+		await this.sendMessageWithRetry(
+			{
 				type: "QUERY_SHORTCUT",
-				payload: { key: this.currentTrigger.substring(1) },
-			});
+				payload: { key: this.currentTrigger }
+			},
+			(response) => {
+				if (response && response.success && response.data) {
+					const shortcut = response.data;
+					const value = input.value;
+					const cursorPosition = input.selectionStart || 0;
 
-			if (response.success && response.data) {
-				const value = input.value;
-				const cursorPosition = input.selectionStart || 0;
+					// Replace the trigger with the expanded content
+					const beforeTrigger = value.substring(0, cursorPosition - this.currentTrigger.length);
+					const afterTrigger = value.substring(cursorPosition);
+					const newValue = beforeTrigger + shortcut.content + afterTrigger;
 
-				// Replace the trigger with the expanded content
-				const beforeTrigger = value.substring(0, cursorPosition - this.currentTrigger.length);
-				const afterTrigger = value.substring(cursorPosition);
-				const newValue = beforeTrigger + response.data.content + afterTrigger;
+					input.value = newValue;
 
-				input.value = newValue;
+					// Update cursor position
+					const newCursorPosition = beforeTrigger.length + shortcut.content.length;
+					input.setSelectionRange(newCursorPosition, newCursorPosition);
 
-				// Update cursor position
-				const newCursorPosition = beforeTrigger.length + response.data.content.length;
-				input.setSelectionRange(newCursorPosition, newCursorPosition);
+					// Trigger input event
+					input.dispatchEvent(new Event("input", { bubbles: true }));
 
-				// Trigger input event to notify other listeners
-				input.dispatchEvent(new Event("input", { bubbles: true }));
-
-				// Remove preview
-				this.removePreview();
-				this.currentTrigger = "";
+					// Clean up
+					this.removePreview();
+					this.currentTrigger = "";
+				}
 			}
-		} catch (error) {
-			console.error("Failed to apply autocomplete:", error);
-		}
+		);
 	}
 
 	private isTextInput(element: HTMLElement): boolean {
@@ -280,5 +315,4 @@ class CutFastContentScript {
 // Initialize the content script
 const cutfastContentScript = new CutFastContentScript();
 
-// Export for potential use
 export default cutfastContentScript;
