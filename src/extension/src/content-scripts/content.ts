@@ -1,7 +1,7 @@
 import browser from "webextension-polyfill";
 
 class CutFastContentScript {
-	private currentInput: HTMLInputElement | HTMLTextAreaElement | null = null;
+	private currentInput: HTMLInputElement | HTMLTextAreaElement | HTMLElement | null = null;
 	private currentTrigger = "";
 	private previewElement: HTMLElement | null = null;
 	private retryCount = 0;
@@ -45,7 +45,7 @@ class CutFastContentScript {
 		const target = event.target as HTMLElement;
 
 		if (this.isTextInput(target)) {
-			this.currentInput = target as HTMLInputElement | HTMLTextAreaElement;
+			this.currentInput = target;
 			console.log("Focused on input element:", target);
 		}
 	}
@@ -72,15 +72,36 @@ class CutFastContentScript {
 			return;
 		}
 
-		const input = target as HTMLInputElement | HTMLTextAreaElement;
-		const value = input.value;
-		const cursorPosition = input.selectionStart || 0;
+		let value: string;
+		let cursorPosition: number;
+
+		if (target.contentEditable === "true") {
+			// Handle contenteditable elements
+			value = target.textContent || "";
+			const selection = window.getSelection();
+			if (selection && selection.rangeCount > 0) {
+				const range = selection.getRangeAt(0);
+				cursorPosition = range.startOffset;
+				// For contenteditable, we need to calculate the cursor position relative to the text content
+				const preCursorRange = document.createRange();
+				preCursorRange.selectNodeContents(target);
+				preCursorRange.setEnd(range.startContainer, range.startOffset);
+				cursorPosition = preCursorRange.toString().length;
+			} else {
+				cursorPosition = value.length;
+			}
+		} else {
+			// Handle regular input/textarea elements
+			const input = target as HTMLInputElement | HTMLTextAreaElement;
+			value = input.value;
+			cursorPosition = input.selectionStart || 0;
+		}
 
 		const triggerMatch = this.detectTrigger(value, cursorPosition);
 
 		if (triggerMatch) {
 			this.currentTrigger = triggerMatch.trigger;
-			this.showPreview(input, triggerMatch);
+			this.showPreview(target, triggerMatch);
 			this.queryShortcut(triggerMatch.trigger);
 		} else {
 			this.currentTrigger = "";
@@ -97,7 +118,7 @@ class CutFastContentScript {
 
 		if (event.ctrlKey && event.shiftKey && event.key === " " && this.currentTrigger && this.previewElement) {
 			event.preventDefault();
-			this.applyAutocomplete(target as HTMLInputElement | HTMLTextAreaElement);
+			this.applyAutocomplete(target);
 		}
 
 		if (event.key === "Escape" && this.previewElement) {
@@ -176,7 +197,7 @@ class CutFastContentScript {
 		}
 	}
 
-	private showPreview(input: HTMLInputElement | HTMLTextAreaElement, triggerMatch: { trigger: string; start: number; end: number }) {
+	private showPreview(input: HTMLElement, triggerMatch: { trigger: string; start: number; end: number }) {
 		if (this.previewElement) {
 			this.removePreview();
 		}
@@ -232,18 +253,26 @@ class CutFastContentScript {
 		}
 	}
 
-	private positionPreview(input: HTMLInputElement | HTMLTextAreaElement, triggerMatch: { trigger: string; start: number; end: number }) {
+	private positionPreview(input: HTMLElement, triggerMatch: { trigger: string; start: number; end: number }) {
 		if (!this.previewElement) return;
 
 		const inputRect = input.getBoundingClientRect();
-		const textBeforeTrigger = input.value.substring(0, triggerMatch.start);
+		let textBeforeTrigger: string;
+
+		if (input.contentEditable === "true") {
+			textBeforeTrigger = (input.textContent || "").substring(0, triggerMatch.start);
+		} else {
+			const inputElement = input as HTMLInputElement | HTMLTextAreaElement;
+			textBeforeTrigger = inputElement.value.substring(0, triggerMatch.start);
+		}
+
 		const approximateCursorX = this.getTextWidth(textBeforeTrigger, input);
 
 		this.previewElement.style.left = `${inputRect.left + approximateCursorX}px`;
 		this.previewElement.style.top = `${inputRect.top - 40}px`;
 	}
 
-	private getTextWidth(text: string, input: HTMLInputElement | HTMLTextAreaElement): number {
+	private getTextWidth(text: string, input: HTMLElement): number {
 		const span = document.createElement("span");
 		span.style.cssText = `
 			position: absolute;
@@ -269,6 +298,37 @@ class CutFastContentScript {
 		}
 	}
 
+	private setCursorPositionInContentEditable(element: HTMLElement, position: number) {
+		const selection = window.getSelection();
+		const range = document.createRange();
+
+		// Find the text node and position within it
+		let currentPos = 0;
+		let targetNode: Node | null = null;
+		let targetOffset = 0;
+
+		const walker = document.createTreeWalker(element, NodeFilter.SHOW_TEXT, null);
+
+		let node = walker.nextNode();
+		while (node) {
+			const nodeLength = node.textContent?.length || 0;
+			if (currentPos + nodeLength >= position) {
+				targetNode = node;
+				targetOffset = position - currentPos;
+				break;
+			}
+			currentPos += nodeLength;
+			node = walker.nextNode();
+		}
+
+		if (targetNode) {
+			range.setStart(targetNode, targetOffset);
+			range.setEnd(targetNode, targetOffset);
+			selection?.removeAllRanges();
+			selection?.addRange(range);
+		}
+	}
+
 	private async triggerAutocomplete() {
 		try {
 			if (!browser.runtime?.id) {
@@ -284,7 +344,7 @@ class CutFastContentScript {
 		}
 	}
 
-	private async applyAutocomplete(input: HTMLInputElement | HTMLTextAreaElement) {
+	private async applyAutocomplete(input: HTMLElement) {
 		await this.sendMessageWithRetry(
 			{
 				type: "QUERY_SHORTCUT",
@@ -293,22 +353,56 @@ class CutFastContentScript {
 			(response) => {
 				if (response && response.success && response.data) {
 					const shortcut = response.data;
-					const value = input.value;
-					const cursorPosition = input.selectionStart || 0;
 
-					// Replace the trigger with the expanded content
-					const beforeTrigger = value.substring(0, cursorPosition - this.currentTrigger.length);
-					const afterTrigger = value.substring(cursorPosition);
-					const newValue = beforeTrigger + shortcut.content + afterTrigger;
+					if (input.contentEditable === "true") {
+						// Handle contenteditable elements
+						const value = input.textContent || "";
+						const selection = window.getSelection();
 
-					input.value = newValue;
+						if (selection && selection.rangeCount > 0) {
+							const range = selection.getRangeAt(0);
+							let cursorPosition = 0;
 
-					// Update cursor position
-					const newCursorPosition = beforeTrigger.length + shortcut.content.length;
-					input.setSelectionRange(newCursorPosition, newCursorPosition);
+							// Calculate cursor position relative to text content
+							const preCursorRange = document.createRange();
+							preCursorRange.selectNodeContents(input);
+							preCursorRange.setEnd(range.startContainer, range.startOffset);
+							cursorPosition = preCursorRange.toString().length;
 
-					// Trigger input event
-					input.dispatchEvent(new Event("input", { bubbles: true }));
+							// Replace the trigger with the expanded content
+							const beforeTrigger = value.substring(0, cursorPosition - this.currentTrigger.length);
+							const afterTrigger = value.substring(cursorPosition);
+							const newValue = beforeTrigger + shortcut.content + afterTrigger;
+
+							input.textContent = newValue;
+
+							// Update cursor position
+							const newCursorPosition = beforeTrigger.length + shortcut.content.length;
+							this.setCursorPositionInContentEditable(input, newCursorPosition);
+
+							// Trigger input event
+							input.dispatchEvent(new Event("input", { bubbles: true }));
+						}
+					} else {
+						// Handle regular input/textarea elements
+						const inputElement = input as HTMLInputElement | HTMLTextAreaElement;
+						const value = inputElement.value;
+						const cursorPosition = inputElement.selectionStart || 0;
+
+						// Replace the trigger with the expanded content
+						const beforeTrigger = value.substring(0, cursorPosition - this.currentTrigger.length);
+						const afterTrigger = value.substring(cursorPosition);
+						const newValue = beforeTrigger + shortcut.content + afterTrigger;
+
+						inputElement.value = newValue;
+
+						// Update cursor position
+						const newCursorPosition = beforeTrigger.length + shortcut.content.length;
+						inputElement.setSelectionRange(newCursorPosition, newCursorPosition);
+
+						// Trigger input event
+						inputElement.dispatchEvent(new Event("input", { bubbles: true }));
+					}
 
 					// Clean up
 					this.removePreview();
