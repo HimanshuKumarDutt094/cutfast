@@ -116,75 +116,7 @@ export class CutFastDatabase extends Dexie {
     }
   }
 
-  async createShortcut(data: {
-    shortcut_key: string;
-    content: string;
-    category_id?: string;
-  }): Promise<Shortcut> {
-    try {
-      const now = new Date();
-      const shortcut: Shortcut = {
-        id: crypto.randomUUID(),
-        userId: "user-1", // TODO: Get from auth context
-        categoryId: data.category_id || null,
-        shortcutKey: data.shortcut_key,
-        content: data.content,
-        lastModifiedAt: now,
-        isSynced: false,
-        createdAt: now,
-        updatedAt: now,
-      };
 
-      await this.shortcuts.add(shortcut);
-      return shortcut;
-    } catch (error) {
-      console.error("Failed to create shortcut:", error);
-      throw error;
-    }
-  }
-
-  async updateShortcut(
-    id: string,
-    data: Partial<{
-      shortcut_key: string;
-      content: string;
-      category_id?: string;
-    }>
-  ): Promise<Shortcut | null> {
-    try {
-      const updateData: Partial<Shortcut> = {
-        updatedAt: new Date(),
-        lastModifiedAt: new Date(),
-      };
-
-      if (data.shortcut_key !== undefined) {
-        updateData.shortcutKey = data.shortcut_key;
-      }
-      if (data.content !== undefined) {
-        updateData.content = data.content;
-      }
-      if (data.category_id !== undefined) {
-        updateData.categoryId = data.category_id;
-      }
-
-      await this.shortcuts.update(id, updateData);
-
-      // Return updated shortcut
-      return await this.shortcuts.get(id) || null;
-    } catch (error) {
-      console.error("Failed to update shortcut:", error);
-      throw error;
-    }
-  }
-
-  async deleteShortcut(id: string): Promise<void> {
-    try {
-      await this.shortcuts.delete(id);
-    } catch (error) {
-      console.error("Failed to delete shortcut:", error);
-      throw error;
-    }
-  }
 
   // Bulk upsert shortcuts from backend sync
   async bulkUpsertShortcuts(items: ReadonlyArray<{

@@ -67,6 +67,11 @@ class CutFastContentScript {
 			return;
 		}
 
+		// Skip if on a LaTeX website
+		if (this.isLaTeXWebsite()) {
+			return;
+		}
+
 		const input = target as HTMLInputElement | HTMLTextAreaElement;
 		const value = input.value;
 		const cursorPosition = input.selectionStart || 0;
@@ -90,7 +95,7 @@ class CutFastContentScript {
 			return;
 		}
 
-		if (event.key === "Tab" && this.currentTrigger && this.previewElement) {
+		if (event.ctrlKey && event.shiftKey && event.key === " " && this.currentTrigger && this.previewElement) {
 			event.preventDefault();
 			this.applyAutocomplete(target as HTMLInputElement | HTMLTextAreaElement);
 		}
@@ -200,8 +205,15 @@ class CutFastContentScript {
 
 	private updatePreview(content: string) {
 		if (this.previewElement) {
-			this.previewElement.textContent = content;
-			
+			let displayContent = content;
+			if (content.length > 50) {
+				displayContent = content.substring(0, 50) + "...";
+			}
+			if (content !== "No shortcut found" && !content.includes("Error") && !content.includes("Extension") && content !== "Loading..." && !content.includes("Reconnecting")) {
+				displayContent += "\n\nPress Ctrl+Shift+Space to accept";
+			}
+			this.previewElement.textContent = displayContent;
+
 			// Change styling based on content type
 			if (content.includes("Error") || content.includes("Extension")) {
 				this.previewElement.style.backgroundColor = "#fff3cd";
@@ -309,6 +321,12 @@ class CutFastContentScript {
 	private isTextInput(element: HTMLElement): boolean {
 		return element.tagName === "INPUT" || element.tagName === "TEXTAREA" ||
 			   element.contentEditable === "true";
+	}
+
+	private isLaTeXWebsite(): boolean {
+		const hostname = window.location.hostname.toLowerCase();
+		const latexSites = ['overleaf.com', 'latex.org', 'tex.stackexchange.com', 'sharelatex.com'];
+		return latexSites.some(site => hostname.includes(site)) || document.querySelector('script[src*="mathjax"]') !== null;
 	}
 }
 
