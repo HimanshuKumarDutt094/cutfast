@@ -1,14 +1,29 @@
 import { signIn, signOut, signUp, useSession } from "../lib/auth-client";
+import { cutfastDb } from "../lib/database";
 
 // Hook for authentication operations
 export function useAuth() {
 	const { data: session, isPending, error, refetch } = useSession();
 
+	const logout = async () => {
+		const result = await signOut();
+		await cutfastDb.clearShortcuts();
+		await cutfastDb.clearCategories();
+		return result;
+	};
+
 	const login = async (email: string, password: string) => {
+		if (session) {
+			await logout();
+		}
 		const result = await signIn.email({
 			email,
 			password,
 		});
+		if (result.data) {
+			await cutfastDb.clearShortcuts();
+			await cutfastDb.clearCategories();
+		}
 		return result;
 	};
 
@@ -18,11 +33,10 @@ export function useAuth() {
 			password,
 			name,
 		});
-		return result;
-	};
-
-	const logout = async () => {
-		const result = await signOut();
+		if (result.data) {
+			await cutfastDb.clearShortcuts();
+			await cutfastDb.clearCategories();
+		}
 		return result;
 	};
 
@@ -30,6 +44,10 @@ export function useAuth() {
 		const result = await signIn.social({
 			provider,
 		});
+		if (result.data) {
+			await cutfastDb.clearShortcuts();
+			await cutfastDb.clearCategories();
+		}
 		return result;
 	};
 

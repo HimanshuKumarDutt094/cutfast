@@ -33,7 +33,7 @@ The system is organized into four logical planes:
 ## Technology Stack
 
 - **Web Dashboard**: Next.js 15, React, TypeScript
-- **Backend**: Next.js API Routes, better-auth
+- **Backend**: Next.js API Routes, better-auth, tRPC
 - **Web Database**: PostgreSQL with Drizzle ORM
 - **Extension Database**: Dexie (IndexedDB wrapper)
 - **Sync**: REST API synchronization

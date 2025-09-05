@@ -167,6 +167,16 @@ export class CutFastDatabase extends Dexie {
     return upserted;
   }
 
+  async clearShortcuts() {
+    await this.shortcuts.clear();
+    console.log("Shortcuts cleared");
+  }
+
+  async clearCategories() {
+    await this.categories.clear();
+    console.log("Categories cleared");
+  }
+
   async close() {
     this.close();
     console.log("Database closed");

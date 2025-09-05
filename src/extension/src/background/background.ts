@@ -232,17 +232,13 @@ class CutFastBackground {
 			const storage = await browser.storage.local.get(["lastSyncTimestamp"]);
 			const lastSync = storage.lastSyncTimestamp ? new Date(storage.lastSyncTimestamp as string) : new Date(0);
 
-			const response = await fetch(`${import.meta.env.VITE_PUBLIC_API_URL || 'http://localhost:3000'}/api/trpc/shortcuts.updatedSince`, {
-				method: 'POST',
+			const input = encodeURIComponent(JSON.stringify({ json: { since: lastSync.toISOString() } }));
+			const response = await fetch(`${import.meta.env.VITE_PUBLIC_API_URL || 'http://localhost:3000'}/api/trpc/shortcuts.updatedSince?input=${input}`, {
+				method: 'GET',
+				credentials: 'include',
 				headers: {
-					'Content-Type': 'application/json',
-					'Authorization': `Bearer ${(await browser.storage.local.get(['accessToken'])).accessToken}`,
+					'content-type': 'application/json',
 				},
-				body: JSON.stringify({
-					json: {
-						since: lastSync.toISOString(),
-					},
-				}),
 			});
 
 			if (!response.ok) {

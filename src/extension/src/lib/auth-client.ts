@@ -2,7 +2,7 @@ import { createAuthClient } from "better-auth/react";
 
 // Create the Better Auth client for the extension
 export const authClient = createAuthClient({
-    baseURL: process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:3000",
+    baseURL: import.meta.env.VITE_PUBLIC_API_URL || "http://localhost:3000",
     // You can add additional client configuration here
     // For example, custom fetch options, plugins, etc.
 });

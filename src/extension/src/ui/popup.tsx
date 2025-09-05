@@ -1,19 +1,19 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { createRoot } from "react-dom/client";
 import browser from "webextension-polyfill";
 import { LoginForm } from "../components/shared/LoginForm";
 import { Button } from "../components/ui/button";
 import { useAuth } from "../hooks/use-auth";
 import "../index.css";
-import { signOut } from "../lib/auth-client";
 import { cutfastDb } from "../lib/database";
 
 // Popup component for CutFast extension
 function Popup() {
-    const { session, isPending: sessionLoading, refetch } = useAuth();
+    const { session, isPending: sessionLoading, refetch, logout } = useAuth();
     const [dbReady, setDbReady] = useState(false);
     const [shortcuts, setShortcuts] = useState<any[]>([]);
     const [shortcutsLoading, setShortcutsLoading] = useState(true);
+    const prevAuthenticated = useRef(false);
 
     // Initialize database and load shortcuts
     useEffect(() => {
@@ -45,7 +45,7 @@ function Popup() {
 
     const handleLogout = async () => {
         try {
-            await signOut();
+            await logout();
             await refetch();
         } catch (error) {
             console.error("Failed to logout:", error);
@@ -67,33 +67,75 @@ function Popup() {
         categoryId?: string | null;
     };
 
-    const syncShortcuts = useCallback(async () => {
+    const syncShortcuts = useCallback(async (fullReplace = false) => {
         if (!dbReady) return;
         setSyncing(true);
         setSyncError(null);
         try {
-            const resp = await fetch(`${baseURL}/api/trpc/shortcuts.list`, {
-                method: "GET",
-                credentials: "include",
-                headers: {
-                    "content-type": "application/json",
-                },
-            });
-            if (!resp.ok) throw new Error(`Sync failed with status ${resp.status}`);
-            const data = (await resp.json()) as { result?: { data?: { json?: TrpcShortcut[] } } };
-            const items = data?.result?.data?.json ?? [];
-            if (items.length > 0) {
-                await cutfastDb.bulkUpsertShortcuts(items);
-                // Refresh shortcuts list
-                const updatedShortcuts = await cutfastDb.getAllShortcuts();
-                setShortcuts(updatedShortcuts);
+            let resp;
+            if (fullReplace) {
+                // Full replace: get all shortcuts
+                resp = await fetch(`${baseURL}/api/trpc/shortcuts.list`, {
+                    method: "GET",
+                    credentials: "include",
+                    headers: {
+                        "content-type": "application/json",
+                    },
+                });
+            } else {
+                // Partial update: get only updated shortcuts
+                const lastSync = (await browser.storage.local.get(["lastSyncTimestamp"])).lastSyncTimestamp || new Date(0).toISOString();
+                const input = encodeURIComponent(JSON.stringify({ json: { since: lastSync } }));
+                resp = await fetch(`${baseURL}/api/trpc/shortcuts.updatedSince?input=${input}`, {
+                    method: 'GET',
+                    credentials: 'include',
+                    headers: {
+                        'content-type': 'application/json',
+                    },
+                });
             }
+
+            if (!resp.ok) throw new Error(`Sync failed with status ${resp.status}`);
+            const data = await resp.json();
+            const items = data?.result?.data?.json ?? [];
+
+            if (fullReplace) {
+                // Clear existing shortcuts to replace with fresh data
+                await cutfastDb.clearShortcuts();
+                if (items.length > 0) {
+                    await cutfastDb.bulkUpsertShortcuts(items);
+                }
+            } else {
+                // Partial update: only upsert changed items
+                if (items.length > 0) {
+                    await cutfastDb.bulkUpsertShortcuts(items);
+                }
+            }
+
+            // Update last sync timestamp for partial updates
+            if (!fullReplace) {
+                await browser.storage.local.set({
+                    lastSyncTimestamp: new Date().toISOString(),
+                });
+            }
+
+            // Refresh shortcuts list
+            const updatedShortcuts = await cutfastDb.getAllShortcuts();
+            setShortcuts(updatedShortcuts);
         } catch (e) {
             setSyncError((e as Error).message);
         } finally {
             setSyncing(false);
         }
     }, [baseURL, dbReady]);
+
+    // Auto sync after login
+    useEffect(() => {
+        if (isAuthenticated && !prevAuthenticated.current && dbReady) {
+            syncShortcuts(true); // Full replace on login
+        }
+        prevAuthenticated.current = isAuthenticated;
+    }, [isAuthenticated, dbReady, syncShortcuts]);
 
     if (isLoading || shortcutsLoading) {
         return (
@@ -133,7 +175,7 @@ function Popup() {
                         Open Dashboard
                     </Button>
 
-                    <Button onClick={syncShortcuts} className="w-full" disabled={!dbReady || syncing}>
+                    <Button onClick={() => syncShortcuts(false)} className="w-full" disabled={!dbReady || syncing}>
                         {syncing ? "Syncing..." : "Sync Shortcuts"}
                     </Button>
                     {syncError && (
