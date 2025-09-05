@@ -107,7 +107,7 @@ class CutFastContentScript {
 
 	private detectTrigger(value: string, cursorPosition: number): { trigger: string; start: number; end: number } | null {
 		const beforeCursor = value.substring(0, cursorPosition);
-		const triggerRegex = /(\/\w+)$/;
+		const triggerRegex = /(\/[\w-]+)$/;
 		const match = beforeCursor.match(triggerRegex);
 
 		if (match) {
