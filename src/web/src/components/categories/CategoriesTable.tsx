@@ -1,5 +1,8 @@
 "use client";
 
+import { Edit, Loader2, Trash2 } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { parseAsString, useQueryState } from "nuqs";
 import { Button } from "@/components/ui/button";
 import {
   Table,
@@ -10,9 +13,6 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { api } from "@/trpc/react";
-import { Edit, Loader2, Trash2 } from "lucide-react";
-import { useRouter } from "next/navigation";
-import { parseAsString, useQueryState } from "nuqs";
 
 export function CategoriesTable() {
   const router = useRouter();
@@ -83,7 +83,9 @@ export function CategoriesTable() {
               <>
                 {categories.map((category) => (
                   <TableRow key={category.id}>
-                    <TableCell className="font-medium">{category.name}</TableCell>
+                    <TableCell className="font-medium">
+                      {category.name}
+                    </TableCell>
                     <TableCell>
                       {category.shortcutCount || 0} shortcuts
                     </TableCell>

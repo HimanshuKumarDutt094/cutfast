@@ -1,4 +1,3 @@
-import { Database, Shield, Smartphone, Zap } from "lucide-react";
 import { LoginForm } from "@/components/auth/LoginForm";
 import { SignupForm } from "@/components/auth/SignupForm";
 import { Badge } from "@/components/ui/badge";
@@ -10,8 +9,11 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { api } from "@/trpc/server";
+import { Database, Shield, Smartphone, Zap } from "lucide-react";
 
-export default function Home() {
+export default async function Home() {
+  const signUpStatus = await api.admin.getConfig();
   return (
     <div className="min-h-screen bg-background">
       {/* Hero Section */}
@@ -111,16 +113,18 @@ export default function Home() {
             </CardHeader>
             <CardContent>
               <Tabs defaultValue="login" className="w-full">
-                <TabsList className="grid w-full grid-cols-2">
+                <TabsList className={`grid w-full ${signUpStatus?.enableSignup?'grid-cols-2':'grid-cols-1'}`}>
                   <TabsTrigger value="login">Login</TabsTrigger>
-                  <TabsTrigger value="signup">Sign Up</TabsTrigger>
-                </TabsList>
+{signUpStatus?.enableSignup&&                  <TabsTrigger value="signup">Sign Up</TabsTrigger>
+}                </TabsList>
                 <TabsContent value="login" className="mt-4">
                   <LoginForm />
                 </TabsContent>
-                <TabsContent value="signup" className="mt-4">
-                  <SignupForm />
-                </TabsContent>
+                {signUpStatus?.enableSignup && (
+                  <TabsContent value="signup" className="mt-4">
+                    <SignupForm />
+                  </TabsContent>
+                )}
               </Tabs>
             </CardContent>
           </Card>

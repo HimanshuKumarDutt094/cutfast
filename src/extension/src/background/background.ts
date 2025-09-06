@@ -8,6 +8,8 @@ class CutFastBackground {
 	private isInitialized = false;
 	private initializationPromise: Promise<void> | null = null;
 
+
+	
 	constructor() {
 		this.init();
 	}

@@ -1,5 +1,9 @@
 "use client";
 
+import { Edit, Loader2, Trash2 } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { parseAsString, useQueryState } from "nuqs";
+import { useTransition } from "react";
 import { Button } from "@/components/ui/button";
 import {
   Table,
@@ -10,10 +14,6 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { api } from "@/trpc/react";
-import { Edit, Loader2, Trash2 } from "lucide-react";
-import { useRouter } from "next/navigation";
-import { parseAsString, useQueryState } from "nuqs";
-import { useTransition } from "react";
 
 export function ShortcutsTable() {
   const { data: categories } = api.categories.list.useQuery();

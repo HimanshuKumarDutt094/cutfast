@@ -1,5 +1,3 @@
-import { Hash, Tags } from "lucide-react";
-import Link from "next/link";
 import { UserMenu } from "@/components/auth/UserMenu";
 import {
   Sidebar,
@@ -15,8 +13,13 @@ import {
   SidebarProvider,
   SidebarTrigger,
 } from "@/components/ui/sidebar";
+import { env } from "@/env";
+import { auth } from "@/server/better-auth";
+import { Hash, Settings, Tags } from "lucide-react";
+import { headers } from "next/headers";
+import Link from "next/link";
 
-const menuItems = [
+const baseMenuItems = [
   {
     id: "shortcuts",
     label: "Shortcuts",
@@ -31,11 +34,29 @@ const menuItems = [
   },
 ];
 
-export default function DashboardLayout({
+export default async function DashboardLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
+  const headersList = await headers();
+  const session = await auth.api.getSession({
+    headers: headersList,
+  });
+
+  const isAdmin = session?.user?.email === env.ADMIN_EMAIL;
+
+  const menuItems = isAdmin
+    ? [
+        ...baseMenuItems,
+        {
+          id: "admin",
+          label: "Admin",
+          icon: Settings,
+          href: "/dashboard/admin",
+        },
+      ]
+    : baseMenuItems;
   return (
     <SidebarProvider>
       <Sidebar>

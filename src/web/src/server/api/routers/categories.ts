@@ -1,23 +1,31 @@
-import { categories, shortcuts } from "@/server/db/schema";
-import { categorySchema } from "@/zod/shortcuts";
 import type { TRPCRouterRecord } from "@trpc/server";
 import { and, count, eq, gt } from "drizzle-orm";
 import { z } from "zod";
+import { categories, shortcuts } from "@/server/db/schema";
+import { categorySchema } from "@/zod/shortcuts";
 import { protectedProcedure } from "../trpc";
 
 export const categoriesRouter = {
   list: protectedProcedure.query(async ({ ctx }) => {
     const rows = await ctx.db
       .select({
-         id: categories.id,
+        id: categories.id,
         userId: categories.userId,
         name: categories.name,
         createdAt: categories.createdAt,
         updatedAt: categories.updatedAt,
         shortcutCount: count(shortcuts.id),
       })
-      .from(categories).leftJoin(shortcuts,and(eq(shortcuts.categoryId,categories.id),eq(shortcuts.userId,ctx.session.user.id)))
-      .where(eq(categories.userId, ctx.session.user.id)).groupBy(categories.id);
+      .from(categories)
+      .leftJoin(
+        shortcuts,
+        and(
+          eq(shortcuts.categoryId, categories.id),
+          eq(shortcuts.userId, ctx.session.user.id),
+        ),
+      )
+      .where(eq(categories.userId, ctx.session.user.id))
+      .groupBy(categories.id);
     return rows;
   }),
 
@@ -59,7 +67,7 @@ export const categoriesRouter = {
         .orderBy(categories.createdAt)
         .limit(limit + 1);
 
-      let nextCursor: string | undefined = undefined;
+      let nextCursor: string | undefined;
       if (rows.length > limit) {
         const nextItem = rows.pop();
         nextCursor = nextItem!.createdAt.toISOString();

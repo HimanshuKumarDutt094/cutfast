@@ -1,8 +1,8 @@
-import { shortcuts } from "@/server/db/schema";
-import { shortcutSchema } from "@/zod/shortcuts";
 import type { TRPCRouterRecord } from "@trpc/server";
 import { and, eq, gt } from "drizzle-orm";
 import { z } from "zod";
+import { shortcuts } from "@/server/db/schema";
+import { shortcutSchema } from "@/zod/shortcuts";
 import { protectedProcedure } from "../trpc";
 
 export const shortcutsRouter = {
@@ -37,7 +37,7 @@ export const shortcutsRouter = {
         .orderBy(shortcuts.createdAt)
         .limit(limit + 1);
 
-      let nextCursor: string | undefined = undefined;
+      let nextCursor: string | undefined;
       if (rows.length > limit) {
         const nextItem = rows.pop();
         nextCursor = nextItem!.createdAt.toISOString();

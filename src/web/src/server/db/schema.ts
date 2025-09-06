@@ -148,3 +148,16 @@ export const shortcuts = pgTable("shortcuts", {
     .notNull()
     .defaultNow(),
 });
+
+// Admin configuration table
+export const config = pgTable("config", {
+  id: text("id").primaryKey().default("global"),
+  maxUsers: text("max_users").notNull().default("100"),
+  enableSignup: boolean("enable_signup").notNull().default(true),
+  createdAt: timestamp("created_at", { withTimezone: true })
+    .notNull()
+    .defaultNow(),
+  updatedAt: timestamp("updated_at", { withTimezone: true })
+    .notNull()
+    .defaultNow(),
+});
