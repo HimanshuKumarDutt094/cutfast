@@ -3,9 +3,9 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Loader2, Plus } from "lucide-react";
 import { useRouter } from "next/navigation";
+import { parseAsString, useQueryState } from "nuqs";
 import { useEffect } from "react";
 import { useForm } from "react-hook-form";
-import { parseAsString, useQueryState } from "nuqs";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -32,15 +32,13 @@ interface CategoryFormProps {
   isLoading?: boolean;
 }
 
-export function CategoryForm({
-  isLoading = false,
-}: CategoryFormProps) {
+export function CategoryForm({ isLoading = false }: CategoryFormProps) {
   const router = useRouter();
   const utils = api.useUtils();
   // Drive dialog by query param (?categoryId=new|<uuid>)
   const [categoryId, setCategoryId] = useQueryState(
     "categoryId",
-    parseAsString.withDefault("")
+    parseAsString.withDefault(""),
   );
   const isCreating = categoryId === "new";
   const isEditing = categoryId !== "" && categoryId !== "new";
@@ -160,8 +158,8 @@ export function CategoryForm({
                     ? "Updating..."
                     : "Update Category"
                   : createMutation.isPending
-                  ? "Creating..."
-                  : "Create Category"}
+                    ? "Creating..."
+                    : "Create Category"}
               </Button>
             </DialogFooter>
           </form>

@@ -3,9 +3,9 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Loader2, Plus } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useEffect, useMemo } from "react";
-import { useForm } from "react-hook-form";
 import { parseAsString, useQueryState } from "nuqs";
+import { useEffect } from "react";
+import { useForm } from "react-hook-form";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -33,35 +33,27 @@ import {
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { api } from "@/trpc/react";
-import type { Category } from "@/types";
 import { type ShortcutFormData, shortcutSchema } from "@/zod/shortcuts";
 
-interface ShortcutFormProps {
-  categories?: Category[];
-  isLoading?: boolean;
-}
-
-export function ShortcutForm({ categories }: ShortcutFormProps) {
+export function ShortcutForm() {
   const router = useRouter();
   const utils = api.useUtils();
   // Drive dialog by query param (?shortcutId=new|<uuid>)
   const [shortcutId, setShortcutId] = useQueryState(
     "shortcutId",
-    parseAsString.withDefault("")
+    parseAsString.withDefault(""),
   );
   const isCreating = shortcutId === "new";
   const isEditing = shortcutId !== "" && shortcutId !== "new";
 
   // Fetch categories if not provided
-  const { data: categoriesData } = api.categories.list.useQuery(undefined, {
-    enabled: !categories,
-  });
-  const allCategories = categories ?? categoriesData ?? [];
+  const { data: categoriesData } = api.categories.list.useQuery(undefined, {});
+  const allCategories = categoriesData ?? [];
 
   // Fetch shortcut by id when editing via URL
   const { data: fetchedShortcut, isLoading } = api.shortcuts.getById.useQuery(
     { id: shortcutId },
-    { enabled: isEditing }
+    { enabled: isEditing },
   );
 
   const form = useForm<ShortcutFormData>({
@@ -257,8 +249,8 @@ export function ShortcutForm({ categories }: ShortcutFormProps) {
                       ? "Updating..."
                       : "Update Shortcut"
                     : createMutation.isPending
-                    ? "Creating..."
-                    : "Create Shortcut"}
+                      ? "Creating..."
+                      : "Create Shortcut"}
                 </Button>
               </DialogFooter>
             </form>

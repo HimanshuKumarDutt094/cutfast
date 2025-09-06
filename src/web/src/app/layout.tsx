@@ -9,8 +9,15 @@ import { TRPCReactProvider } from "@/trpc/react";
 export const metadata: Metadata = {
   metadataBase: new URL("https://cutfast.app"),
   title: "CutFast - Smart Text Shortcuts",
-  description: "Boost your productivity with intelligent text shortcuts. Create, manage, and use custom shortcuts across all your favorite apps and websites.",
-  keywords: ["text shortcuts", "productivity", "automation", "text expansion", "keyboard shortcuts"],
+  description:
+    "Boost your productivity with intelligent text shortcuts. Create, manage, and use custom shortcuts across all your favorite apps and websites.",
+  keywords: [
+    "text shortcuts",
+    "productivity",
+    "automation",
+    "text expansion",
+    "keyboard shortcuts",
+  ],
   authors: [{ name: "Himanshu Kumar Dutt" }],
   creator: "Himanshu Kumar Dutt",
   publisher: "Himanshu Kumar Dutt",
@@ -23,13 +30,19 @@ export const metadata: Metadata = {
     { rel: "icon", url: "/cutfast-16.png", sizes: "16x16", type: "image/png" },
     { rel: "icon", url: "/cutfast-32.png", sizes: "32x32", type: "image/png" },
     { rel: "icon", url: "/cutfast-48.png", sizes: "48x48", type: "image/png" },
-    { rel: "icon", url: "/cutfast-128.png", sizes: "128x128", type: "image/png" },
+    {
+      rel: "icon",
+      url: "/cutfast-128.png",
+      sizes: "128x128",
+      type: "image/png",
+    },
     { rel: "apple-touch-icon", url: "/cutfast-128.png", sizes: "128x128" },
   ],
   manifest: "/manifest.json",
   openGraph: {
     title: "CutFast - Smart Text Shortcuts",
-    description: "Boost your productivity with intelligent text shortcuts. Create, manage, and use custom shortcuts across all your favorite apps and websites.",
+    description:
+      "Boost your productivity with intelligent text shortcuts. Create, manage, and use custom shortcuts across all your favorite apps and websites.",
     url: "https://cutfast.app",
     siteName: "CutFast",
     images: [
@@ -46,7 +59,8 @@ export const metadata: Metadata = {
   twitter: {
     card: "summary_large_image",
     title: "CutFast - Smart Text Shortcuts",
-    description: "Boost your productivity with intelligent text shortcuts. Create, manage, and use custom shortcuts across all your favorite apps and websites.",
+    description:
+      "Boost your productivity with intelligent text shortcuts. Create, manage, and use custom shortcuts across all your favorite apps and websites.",
     images: ["/cutfast.png"],
     creator: "@cutfast",
   },

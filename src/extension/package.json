@@ -7,7 +7,6 @@
   "license": "MIT",
   "scripts": {
     "dev": "vite",
-    "build": "vite build",
     "build:chrome": "TARGET_BROWSER=chrome vite build",
     "build:firefox": "TARGET_BROWSER=firefox vite build",
     "build:all": "npm run build:chrome && npm run build:firefox",

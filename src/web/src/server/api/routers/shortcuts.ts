@@ -21,7 +21,10 @@ export const shortcutsRouter = {
         .select()
         .from(shortcuts)
         .where(
-          and(eq(shortcuts.id, input.id), eq(shortcuts.userId, ctx.session.user.id)),
+          and(
+            eq(shortcuts.id, input.id),
+            eq(shortcuts.userId, ctx.session.user.id),
+          ),
         );
       return rows[0] ?? null;
     }),

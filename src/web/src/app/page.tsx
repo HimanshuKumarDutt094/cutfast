@@ -1,3 +1,4 @@
+import { Database, Shield, Smartphone, Zap } from "lucide-react";
 import { LoginForm } from "@/components/auth/LoginForm";
 import { SignupForm } from "@/components/auth/SignupForm";
 import { Badge } from "@/components/ui/badge";
@@ -9,7 +10,6 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Database, Shield, Smartphone, Zap } from "lucide-react";
 
 export default function Home() {
   return (
@@ -30,8 +30,12 @@ export default function Home() {
               Instantaneous, offline-capable text expansion platform. Transform
               how you write with intelligent shortcuts that work everywhere.
             </p>
-          <a className="mx-auto max-w-2xl" href="https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2FHimanshuKumarDutt094%2Fcutfast&env=DATABASE_URL,BETTER_AUTH_SECRET&envDescription=we%20need%20a%20deployed%20postgres%20databse%20url%20as%20well%20as%20a%20secret%20to%20hash%20your%20passwords&project-name=cutfast-dashboard&repository-name=cutfast-dashboard&skippable-integrations=1&root-directory=src/web
-"><img src="https://vercel.com/button" alt="Deploy with Vercel"/></a>
+            <a
+              className="mx-auto max-w-2xl"
+              href="https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2FHimanshuKumarDutt094%2Fcutfast%2Ftree%2Fmain%2Fsrc%2Fweb&env=BETTER_AUTH_SECRET&envDescription=we%20need%20a%20secret%20to%20hash%20your%20passwords&project-name=cutfast-dashboard&repository-name=cutfast-dashboard&products=%5B%7B%22type%22%3A%22integration%22%2C%22protocol%22%3A%22storage%22%2C%22productSlug%22%3A%22neon%22%2C%22integrationSlug%22%3A%22neon%22%7D%5D&skippable-integrations=0"
+            >
+              <img src="https://vercel.com/button" alt="Deploy with Vercel" />
+            </a>
           </div>
         </div>
       </div>

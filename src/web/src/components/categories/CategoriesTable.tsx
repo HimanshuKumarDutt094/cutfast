@@ -1,9 +1,5 @@
 "use client";
 
-import { Edit, Trash2 } from "lucide-react";
-import { useRouter } from "next/navigation";
-import { useTransition } from "react";
-import { parseAsString, useQueryState } from "nuqs";
 import { Button } from "@/components/ui/button";
 import {
   Table,
@@ -14,26 +10,23 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { api } from "@/trpc/react";
-import type { Category } from "@/types";
+import { Edit, Loader2, Trash2 } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { parseAsString, useQueryState } from "nuqs";
 
-interface CategoriesTableProps {
-  categories: Category[];
-  isLoading?: boolean;
-}
-
-export function CategoriesTable({
-  categories,
-  isLoading = false,
-}: CategoriesTableProps) {
-  const [isPending, startTransition] = useTransition();
+export function CategoriesTable() {
   const router = useRouter();
   const utils = api.useUtils();
-  const [, setCategoryId] = useQueryState("categoryId", parseAsString.withDefault(""));
+  const [, setCategoryId] = useQueryState(
+    "categoryId",
+    parseAsString.withDefault(""),
+  );
 
+  const { data: categories, isLoading } = api.categories.list.useQuery();
   const deleteMutation = api.categories.delete.useMutation({
     onSuccess: async () => {
       await utils.categories.invalidate();
-      startTransition(() => router.refresh());
+      router.refresh();
     },
   });
 
@@ -46,7 +39,7 @@ export function CategoriesTable({
       await deleteMutation.mutateAsync({ id });
     }
   };
-
+  if(isLoading) return <Loader2 className="animate-spin" />
   return (
     <>
       <div className="rounded-md border">
@@ -60,7 +53,7 @@ export function CategoriesTable({
             </TableRow>
           </TableHeader>
           <TableBody>
-            {categories.length === 0 ? (
+            {categories && categories.length === 0 ? (
               <TableRow>
                 <TableCell
                   colSpan={4}
@@ -71,11 +64,12 @@ export function CategoriesTable({
                 </TableCell>
               </TableRow>
             ) : (
+              categories &&
               categories.map((category) => (
                 <TableRow key={category.id}>
                   <TableCell className="font-medium">{category.name}</TableCell>
                   <TableCell>
-                    {category._count?.shortcuts || 0} shortcuts
+                    {category.shortcutCount || 0} shortcuts
                   </TableCell>
                   <TableCell>
                     {new Date(category.createdAt).toLocaleDateString()}

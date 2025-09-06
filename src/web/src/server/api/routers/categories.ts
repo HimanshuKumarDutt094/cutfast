@@ -1,16 +1,23 @@
-import type { TRPCRouterRecord } from "@trpc/server";
-import { and, eq } from "drizzle-orm";
-import { z } from "zod";
-import { categories } from "@/server/db/schema";
+import { categories, shortcuts } from "@/server/db/schema";
 import { categorySchema } from "@/zod/shortcuts";
+import type { TRPCRouterRecord } from "@trpc/server";
+import { and, count, eq } from "drizzle-orm";
+import { z } from "zod";
 import { protectedProcedure } from "../trpc";
 
 export const categoriesRouter = {
   list: protectedProcedure.query(async ({ ctx }) => {
     const rows = await ctx.db
-      .select()
-      .from(categories)
-      .where(eq(categories.userId, ctx.session.user.id));
+      .select({
+         id: categories.id,
+        userId: categories.userId,
+        name: categories.name,
+        createdAt: categories.createdAt,
+        updatedAt: categories.updatedAt,
+        shortcutCount: count(shortcuts.id),
+      })
+      .from(categories).leftJoin(shortcuts,and(eq(shortcuts.categoryId,categories.id),eq(shortcuts.userId,ctx.session.user.id)))
+      .where(eq(categories.userId, ctx.session.user.id)).groupBy(categories.id);
     return rows;
   }),
 
@@ -21,7 +28,10 @@ export const categoriesRouter = {
         .select()
         .from(categories)
         .where(
-          and(eq(categories.id, input.id), eq(categories.userId, ctx.session.user.id)),
+          and(
+            eq(categories.id, input.id),
+            eq(categories.userId, ctx.session.user.id),
+          ),
         );
       return rows[0] ?? null;
     }),
