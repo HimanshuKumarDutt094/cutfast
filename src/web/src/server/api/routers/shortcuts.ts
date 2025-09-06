@@ -1,8 +1,8 @@
+import { shortcuts } from "@/server/db/schema";
+import { shortcutSchema } from "@/zod/shortcuts";
 import type { TRPCRouterRecord } from "@trpc/server";
 import { and, eq, gt } from "drizzle-orm";
 import { z } from "zod";
-import { shortcuts } from "@/server/db/schema";
-import { shortcutSchema } from "@/zod/shortcuts";
 import { protectedProcedure } from "../trpc";
 
 export const shortcutsRouter = {
@@ -13,6 +13,41 @@ export const shortcutsRouter = {
       .where(eq(shortcuts.userId, ctx.session.user.id));
     return rows;
   }),
+
+  listInfinite: protectedProcedure
+    .input(
+      z.object({
+        limit: z.number().min(1).max(100).nullish(),
+        cursor: z.string().nullish(),
+      }),
+    )
+    .query(async ({ ctx, input }) => {
+      const limit = input.limit ?? 50;
+      const { cursor } = input;
+
+      const rows = await ctx.db
+        .select()
+        .from(shortcuts)
+        .where(
+          and(
+            eq(shortcuts.userId, ctx.session.user.id),
+            cursor ? gt(shortcuts.createdAt, new Date(cursor)) : undefined,
+          ),
+        )
+        .orderBy(shortcuts.createdAt)
+        .limit(limit + 1);
+
+      let nextCursor: string | undefined = undefined;
+      if (rows.length > limit) {
+        const nextItem = rows.pop();
+        nextCursor = nextItem!.createdAt.toISOString();
+      }
+
+      return {
+        items: rows,
+        nextCursor,
+      };
+    }),
 
   getById: protectedProcedure
     .input(z.object({ id: z.uuid() }))

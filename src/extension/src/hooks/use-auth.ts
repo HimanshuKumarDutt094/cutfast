@@ -13,14 +13,19 @@ export function useAuth() {
 	};
 
 	const login = async (email: string, password: string) => {
+		console.log("[useAuth] Login called with email:", email);
 		if (session) {
+			console.log("[useAuth] Session exists, logging out first...");
 			await logout();
 		}
+		console.log("[useAuth] Calling signIn.email...");
 		const result = await signIn.email({
 			email,
 			password,
 		});
+		console.log("[useAuth] signIn.email result:", result);
 		if (result.data) {
+			console.log("[useAuth] Login successful, clearing local database...");
 			await cutfastDb.clearShortcuts();
 			await cutfastDb.clearCategories();
 		}

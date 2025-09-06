@@ -22,7 +22,19 @@ export function CategoriesTable() {
     parseAsString.withDefault(""),
   );
 
-  const { data: categories, isLoading } = api.categories.list.useQuery();
+  const {
+    data: categoriesData,
+    isLoading,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
+  } = api.categories.listInfinite.useInfiniteQuery(
+    { limit: 20 },
+    {
+      getNextPageParam: (lastPage) => lastPage.nextCursor,
+    },
+  );
+
   const deleteMutation = api.categories.delete.useMutation({
     onSuccess: async () => {
       await utils.categories.invalidate();
@@ -39,7 +51,11 @@ export function CategoriesTable() {
       await deleteMutation.mutateAsync({ id });
     }
   };
-  if(isLoading) return <Loader2 className="animate-spin" />
+
+  const categories = categoriesData?.pages.flatMap((page) => page.items) ?? [];
+
+  if (isLoading) return <Loader2 className="animate-spin" />;
+
   return (
     <>
       <div className="rounded-md border">
@@ -53,7 +69,7 @@ export function CategoriesTable() {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {categories && categories.length === 0 ? (
+            {categories.length === 0 ? (
               <TableRow>
                 <TableCell
                   colSpan={4}
@@ -64,39 +80,57 @@ export function CategoriesTable() {
                 </TableCell>
               </TableRow>
             ) : (
-              categories &&
-              categories.map((category) => (
-                <TableRow key={category.id}>
-                  <TableCell className="font-medium">{category.name}</TableCell>
-                  <TableCell>
-                    {category.shortcutCount || 0} shortcuts
-                  </TableCell>
-                  <TableCell>
-                    {new Date(category.createdAt).toLocaleDateString()}
-                  </TableCell>
-                  <TableCell>
-                    <div className="flex items-center gap-2">
+              <>
+                {categories.map((category) => (
+                  <TableRow key={category.id}>
+                    <TableCell className="font-medium">{category.name}</TableCell>
+                    <TableCell>
+                      {category.shortcutCount || 0} shortcuts
+                    </TableCell>
+                    <TableCell>
+                      {new Date(category.createdAt).toLocaleDateString()}
+                    </TableCell>
+                    <TableCell>
+                      <div className="flex items-center gap-2">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => void setCategoryId(category.id)}
+                          disabled={isLoading || deleteMutation.isPending}
+                        >
+                          <Edit className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleDelete(category.id)}
+                          disabled={isLoading || deleteMutation.isPending}
+                          className="text-destructive hover:text-destructive"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ))}
+                {hasNextPage && (
+                  <TableRow>
+                    <TableCell colSpan={4} className="text-center py-4">
                       <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => void setCategoryId(category.id)}
-                        disabled={isLoading || deleteMutation.isPending}
+                        onClick={() => fetchNextPage()}
+                        disabled={isFetchingNextPage}
+                        variant="outline"
                       >
-                        <Edit className="h-4 w-4" />
+                        {isFetchingNextPage ? (
+                          <Loader2 className="animate-spin h-4 w-4" />
+                        ) : (
+                          "Load More"
+                        )}
                       </Button>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => handleDelete(category.id)}
-                        disabled={isLoading || deleteMutation.isPending}
-                        className="text-destructive hover:text-destructive"
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  </TableCell>
-                </TableRow>
-              ))
+                    </TableCell>
+                  </TableRow>
+                )}
+              </>
             )}
           </TableBody>
         </Table>

@@ -28,14 +28,19 @@ export function LoginForm({ onSuccess }: LoginFormProps) {
   });
 
   const onSubmit = async (data: LoginFormData) => {
+    console.log("[LoginForm] Form submitted with data:", { email: data.email, password: "***" });
     try {
+      console.log("[LoginForm] Calling login function...");
       const result = await login(data.email, data.password);
+      console.log("[LoginForm] Login result:", result);
 
       if (result.error) {
+        console.error("[LoginForm] Login error:", result.error);
         form.setError("root", {
           message: result.error.message || "An error occurred during sign in",
         });
       } else {
+        console.log("[LoginForm] Login successful, calling onSuccess callback");
         // If used in extension popup, prefer callback instead of redirect
         if (onSuccess) {
           onSuccess();
@@ -43,7 +48,8 @@ export function LoginForm({ onSuccess }: LoginFormProps) {
           window.location.href = "/dashboard";
         }
       }
-    } catch (_err) {
+    } catch (err) {
+      console.error("[LoginForm] Login exception:", err);
       form.setError("root", {
         message: "An error occurred during sign in",
       });

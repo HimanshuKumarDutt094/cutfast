@@ -1,4 +1,5 @@
 import browser from "webextension-polyfill";
+import { getBaseUrl } from "../lib/api-url";
 import { cutfastDb } from "../lib/database";
 
 class CutFastBackground {
@@ -232,8 +233,9 @@ class CutFastBackground {
 			const storage = await browser.storage.local.get(["lastSyncTimestamp"]);
 			const lastSync = storage.lastSyncTimestamp ? new Date(storage.lastSyncTimestamp as string) : new Date(0);
 
+			const apiUrl = await getBaseUrl();
 			const input = encodeURIComponent(JSON.stringify({ json: { since: lastSync.toISOString() } }));
-			const response = await fetch(`${import.meta.env.VITE_PUBLIC_API_URL || 'http://localhost:3000'}/api/trpc/shortcuts.updatedSince?input=${input}`, {
+			const response = await fetch(`${apiUrl}/api/trpc/shortcuts.updatedSince?input=${input}`, {
 				method: 'GET',
 				credentials: 'include',
 				headers: {

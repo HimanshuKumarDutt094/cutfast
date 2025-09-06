@@ -1,47 +1,95 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { createRoot } from "react-dom/client";
 import browser from "webextension-polyfill";
 import { LoginForm } from "../components/shared/LoginForm";
 import { Button } from "../components/ui/button";
+import { Input } from "../components/ui/input";
 import { useAuth } from "../hooks/use-auth";
 import "../index.css";
+import { getBaseUrl, getCustomApiUrl, saveCustomApiUrl } from "../lib/api-url";
 import { cutfastDb } from "../lib/database";
 
 // Popup component for CutFast extension
 function Popup() {
     const { session, isPending: sessionLoading, refetch, logout } = useAuth();
+    const prevAuthenticated = useRef(false);
+
+    const isAuthenticated = !!session;
+
+    const [dynamicBaseURL, setDynamicBaseURL] = useState("");
     const [dbReady, setDbReady] = useState(false);
     const [shortcuts, setShortcuts] = useState<any[]>([]);
     const [shortcutsLoading, setShortcutsLoading] = useState(true);
-    const prevAuthenticated = useRef(false);
+    const isLoading = sessionLoading || shortcutsLoading;
 
-    // Initialize database and load shortcuts
+    const [syncing, setSyncing] = useState(false);
+    const [syncError, setSyncError] = useState<string | null>(null);
+
+    // API endpoint configuration
+    const [showApiConfig, setShowApiConfig] = useState(false);
+    const [customApiUrl, setCustomApiUrl] = useState("");
+    const [apiConfigLoading, setApiConfigLoading] = useState(false);
+    const [apiConfigError, setApiConfigError] = useState<string | null>(null);
+    const [urlRefreshTrigger, setUrlRefreshTrigger] = useState(0);
+
+    // Consolidated initialization effect
     useEffect(() => {
-        const initDb = async () => {
+        const initializeEverything = async () => {
             try {
-                await cutfastDb.initialize();
-                setDbReady(true);
+                console.log("[Init] Starting consolidated initialization (trigger:", urlRefreshTrigger, ")");
+
+                // Initialize database (only once)
+                if (!dbReady) {
+                    await cutfastDb.initialize();
+                    setDbReady(true);
+                    console.log("[Init] Database ready");
+                }
+
+                // Load shortcuts
                 const loadedShortcuts = await cutfastDb.getAllShortcuts();
                 setShortcuts(loadedShortcuts);
+                console.log("[Init] Loaded", loadedShortcuts.length, "shortcuts");
+
+                // Load API URLs (refresh when urlRefreshTrigger changes)
+                const apiUrl = await getBaseUrl();
+                setDynamicBaseURL(apiUrl);
+                console.log("[Init] Dynamic API URL:", apiUrl);
+
+                const savedUrl = await getCustomApiUrl();
+                setCustomApiUrl(savedUrl);
+                console.log("[Init] Custom API URL:", savedUrl);
+
+                console.log("[Init] All initialization complete");
             } catch (error) {
-                console.error("Failed to initialize database:", error);
+                console.error("[Init] Initialization failed:", error);
+                // getBaseUrl() already has fallback, so this shouldn't happen
+                // But if it does, set a reasonable default
+                setDynamicBaseURL("http://localhost:3000");
             } finally {
                 setShortcutsLoading(false);
             }
         };
 
-        initDb();
-    }, []);
+        initializeEverything();
+    }, [urlRefreshTrigger]); // Re-run when URL is updated
 
-    const isAuthenticated = !!session;
-    const isLoading = sessionLoading || shortcutsLoading;
+    // Handle saving custom API URL
+    const handleSaveApiUrl = async () => {
+        setApiConfigLoading(true);
+        setApiConfigError(null);
 
-    const baseURL = useMemo(() => {
-        return (process.env.NEXT_PUBLIC_BASE_URL as string) || "http://localhost:3000";
-    }, []);
-
-    const [syncing, setSyncing] = useState(false);
-    const [syncError, setSyncError] = useState<string | null>(null);
+        try {
+            await saveCustomApiUrl(customApiUrl);
+            setShowApiConfig(false);
+            // Trigger URL refresh to reload the new API URL
+            setUrlRefreshTrigger(prev => prev + 1);
+            console.log("[Config] API URL updated, triggering refresh");
+        } catch (error) {
+            setApiConfigError(error instanceof Error ? error.message : "Failed to save API URL");
+        } finally {
+            setApiConfigLoading(false);
+        }
+    };
 
     const handleLogout = async () => {
         try {
@@ -52,9 +100,14 @@ function Popup() {
         }
     };
 
+    const handleLoginSuccess = () => {
+        console.log("[Popup] Login success callback called, refetching session...");
+        refetch();
+    };
+
     const handleOpenDashboard = () => {
         browser.tabs.create({
-            url: `${baseURL}/dashboard`,
+            url: `${dynamicBaseURL}/dashboard`,
         });
         window.close();
     };
@@ -67,15 +120,27 @@ function Popup() {
         categoryId?: string | null;
     };
 
-    const syncShortcuts = useCallback(async (fullReplace = false) => {
-        if (!dbReady) return;
+    const syncShortcuts = useCallback(async (fullReplace = false, currentDbReady = dbReady, currentApiUrl = dynamicBaseURL) => {
+        console.log("[Sync] Starting sync, fullReplace:", fullReplace);
+        console.log("[Sync] dbReady:", currentDbReady, "dynamicBaseURL:", currentApiUrl);
+
+        if (!currentDbReady || !currentApiUrl) {
+            console.log("[Sync] Skipping sync - dbReady:", currentDbReady, "dynamicBaseURL:", currentApiUrl);
+            return;
+        }
+
         setSyncing(true);
         setSyncError(null);
+
         try {
             let resp;
+            let fetchUrl;
+
             if (fullReplace) {
                 // Full replace: get all shortcuts
-                resp = await fetch(`${baseURL}/api/trpc/shortcuts.list`, {
+                fetchUrl = `${currentApiUrl}/api/trpc/shortcuts.list`;
+                console.log("[Sync] Full replace fetch URL:", fetchUrl);
+                resp = await fetch(fetchUrl, {
                     method: "GET",
                     credentials: "include",
                     headers: {
@@ -85,8 +150,11 @@ function Popup() {
             } else {
                 // Partial update: get only updated shortcuts
                 const lastSync = (await browser.storage.local.get(["lastSyncTimestamp"])).lastSyncTimestamp || new Date(0).toISOString();
+                console.log("[Sync] Last sync timestamp:", lastSync);
                 const input = encodeURIComponent(JSON.stringify({ json: { since: lastSync } }));
-                resp = await fetch(`${baseURL}/api/trpc/shortcuts.updatedSince?input=${input}`, {
+                fetchUrl = `${currentApiUrl}/api/trpc/shortcuts.updatedSince?input=${input}`;
+                console.log("[Sync] Partial update fetch URL:", fetchUrl);
+                resp = await fetch(fetchUrl, {
                     method: 'GET',
                     credentials: 'include',
                     headers: {
@@ -95,47 +163,67 @@ function Popup() {
                 });
             }
 
-            if (!resp.ok) throw new Error(`Sync failed with status ${resp.status}`);
+            console.log("[Sync] Fetch response status:", resp.status);
+            if (!resp.ok) {
+                console.error("[Sync] Fetch failed with status:", resp.status);
+                throw new Error(`Sync failed with status ${resp.status}`);
+            }
+
             const data = await resp.json();
+            console.log("[Sync] Raw response data:", data);
             const items = data?.result?.data?.json ?? [];
+            console.log("[Sync] Parsed items:", items);
 
             if (fullReplace) {
                 // Clear existing shortcuts to replace with fresh data
+                console.log("[Sync] Clearing existing shortcuts for full replace");
                 await cutfastDb.clearShortcuts();
                 if (items.length > 0) {
+                    console.log("[Sync] Bulk upserting", items.length, "shortcuts");
                     await cutfastDb.bulkUpsertShortcuts(items);
                 }
             } else {
                 // Partial update: only upsert changed items
                 if (items.length > 0) {
+                    console.log("[Sync] Bulk upserting", items.length, "updated shortcuts");
                     await cutfastDb.bulkUpsertShortcuts(items);
+                } else {
+                    console.log("[Sync] No updated shortcuts to sync");
                 }
             }
 
             // Update last sync timestamp for partial updates
             if (!fullReplace) {
+                const newTimestamp = new Date().toISOString();
+                console.log("[Sync] Updating last sync timestamp to:", newTimestamp);
                 await browser.storage.local.set({
-                    lastSyncTimestamp: new Date().toISOString(),
+                    lastSyncTimestamp: newTimestamp,
                 });
             }
 
             // Refresh shortcuts list
+            console.log("[Sync] Refreshing shortcuts list");
             const updatedShortcuts = await cutfastDb.getAllShortcuts();
+            console.log("[Sync] Updated shortcuts count:", updatedShortcuts.length);
             setShortcuts(updatedShortcuts);
+
+            console.log("[Sync] Sync completed successfully");
         } catch (e) {
+            console.error("[Sync] Sync failed with error:", e);
             setSyncError((e as Error).message);
         } finally {
             setSyncing(false);
         }
-    }, [baseURL, dbReady]);
+    }, []); // Remove dependencies to prevent infinite loops
 
-    // Auto sync after login
+    // Auto sync after login - only when fully initialized
     useEffect(() => {
-        if (isAuthenticated && !prevAuthenticated.current && dbReady) {
-            syncShortcuts(true); // Full replace on login
+        if (isAuthenticated && !prevAuthenticated.current && dbReady && dynamicBaseURL) {
+            console.log("[AutoSync] Conditions met, starting auto-sync after login");
+            syncShortcuts(true, dbReady, dynamicBaseURL); // Pass current values
         }
         prevAuthenticated.current = isAuthenticated;
-    }, [isAuthenticated, dbReady, syncShortcuts]);
+    }, [isAuthenticated, dbReady, dynamicBaseURL]); // Include dynamicBaseURL dependency
 
     if (isLoading || shortcutsLoading) {
         return (
@@ -157,9 +245,6 @@ function Popup() {
 
             {isAuthenticated ? (
                 <div className="space-y-3">
-                    <div className="text-sm text-green-600 text-center">
-                        ✓ Authenticated
-                    </div>
 
                     {/* Database Status */}
                     <div className="text-xs text-gray-500 text-center">
@@ -175,7 +260,7 @@ function Popup() {
                         Open Dashboard
                     </Button>
 
-                    <Button onClick={() => syncShortcuts(false)} className="w-full" disabled={!dbReady || syncing}>
+                    <Button onClick={() => syncShortcuts(false, dbReady, dynamicBaseURL)} className="w-full" disabled={!dbReady || syncing}>
                         {syncing ? "Syncing..." : "Sync Shortcuts"}
                     </Button>
                     {syncError && (
@@ -190,7 +275,7 @@ function Popup() {
                                 className="w-full justify-start text-sm"
                                 onClick={() => {
                                     browser.tabs.create({
-                                        url: `${baseURL}/dashboard`,
+                                        url: `${dynamicBaseURL}/dashboard`,
                                     });
                                     window.close();
                                 }}
@@ -202,7 +287,7 @@ function Popup() {
                                 className="w-full justify-start text-sm"
                                 onClick={() => {
                                     browser.tabs.create({
-                                        url: `${baseURL}/dashboard`,
+                                        url: `${dynamicBaseURL}/dashboard`,
                                     });
                                     window.close();
                                 }}
@@ -218,9 +303,58 @@ function Popup() {
                 </div>
             ) : (
                 <div className="space-y-3">
-                    <div className="text-sm text-red-600 text-center">Not authenticated</div>
                     <p className="text-sm text-gray-600 text-center">Please log in to use CutFast text shortcuts</p>
-                    <LoginForm onSuccess={refetch} />
+
+                    {/* API Endpoint Configuration */}
+                    {!showApiConfig ? (
+                        <div className="space-y-2">
+                            <Button
+                                variant="outline"
+                                className="w-full text-xs"
+                                onClick={() => setShowApiConfig(true)}
+                            >
+                                Configure API Endpoint
+                            </Button>
+                            <p className="text-xs text-gray-500 text-center underline">
+                             <span className="text-red-500 underline">{` | `}</span>   After changing URL, close and reopen extension
+                            </p>
+                        </div>
+                    ) : (
+                        <div className="space-y-2 p-3 border rounded">
+                            <div className="text-xs font-medium">Custom API Endpoint</div>
+                            <Input
+                                type="url"
+                                placeholder="https://your-api.com"
+                                value={customApiUrl}
+                                onChange={(e) => setCustomApiUrl(e.target.value)}
+                                className="text-xs"
+                            />
+                            {apiConfigError && (
+                                <div className="text-xs text-red-600">{apiConfigError}</div>
+                            )}
+                            <div className="flex gap-2">
+                                <Button
+                                    size="sm"
+                                    className="flex-1 text-xs"
+                                    onClick={handleSaveApiUrl}
+                                    disabled={apiConfigLoading}
+                                >
+                                    {apiConfigLoading ? "Saving..." : "Save"}
+                                </Button>
+                                <Button
+                                    size="sm"
+                                    variant="outline"
+                                    className="flex-1 text-xs"
+                                    onClick={() => setShowApiConfig(false)}
+                                >
+                                    Cancel
+                                </Button>
+                            </div>
+                        </div>
+                    )}
+
+                    {/* Only show login form when not configuring API */}
+                    {!showApiConfig && <LoginForm onSuccess={handleLoginSuccess} />}
                 </div>
             )}
 
