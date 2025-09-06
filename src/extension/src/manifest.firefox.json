@@ -2,23 +2,21 @@
   "name": "CutFast - Text Shortcuts",
   "description": "Local-first text shortcut platform for instant text expansion",
   "version": "1.0.0",
-  "manifest_version": 2,
-  "permissions": [
-    "storage",
-    "activeTab",
-    "<all_urls>"
-  ],
+  "manifest_version": 3,
+  "permissions": ["storage", "activeTab", "commands"],
+  "host_permissions": ["http://localhost:3000/*", "https://*/*"],
   "background": {
-    "scripts": ["src/background/background.js"]
+    "service_worker": "src/background/background.ts",
+    "type": "module"
   },
   "content_scripts": [
     {
       "matches": ["<all_urls>"],
-      "js": ["src/content-scripts/content.js"],
+      "js": ["src/content-scripts/content.ts"],
       "run_at": "document_start"
     }
   ],
-  "browser_action": {
+  "action": {
     "default_popup": "src/ui/popup.html",
     "default_title": "CutFast",
     "default_icon": {
@@ -44,7 +42,10 @@
     "128": "cutfast-128.png"
   },
   "web_accessible_resources": [
-    "src/ui/*"
+    {
+      "resources": ["src/ui/*"],
+      "matches": ["<all_urls>"]
+    }
   ],
   "browser_specific_settings": {
     "gecko": {

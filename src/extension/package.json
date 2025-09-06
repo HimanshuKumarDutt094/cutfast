@@ -13,7 +13,8 @@
     "build:all": "npm run build:chrome && npm run build:firefox",
     "lint": "biome check --write",
     "preview": "vite preview",
-    "ui-add": "npx shadcn@latest add "
+    "ui-add": "npx shadcn@latest add ",
+     "check-types": "tsc --noEmit"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.2.1",

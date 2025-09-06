@@ -16,6 +16,12 @@ export default defineConfig({
       browser: process.env.TARGET_BROWSER || "chrome", // Support chrome/firefox
     }),
   ],
+  build: {
+    outDir: process.env.TARGET_BROWSER === "firefox" ? "dist-firefox" : "dist-chrome",
+    rollupOptions: {
+      external: ["fs", "path"],
+    },
+  },
   resolve: {
     alias: {
       "@": path.resolve(__dirname, "./src"),
@@ -30,11 +36,6 @@ export default defineConfig({
   },
   optimizeDeps: {
     exclude: ["@electric-sql/pglite"],
-  },
-  build: {
-    rollupOptions: {
-      external: ["fs", "path"],
-    },
   },
   // Let vite-plugin-web-extension manage entries based on the manifest
 });

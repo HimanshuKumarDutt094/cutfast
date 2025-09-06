@@ -7,6 +7,7 @@ import { NuqsAdapter } from "nuqs/adapters/next/app";
 import { TRPCReactProvider } from "@/trpc/react";
 
 export const metadata: Metadata = {
+  metadataBase: new URL("https://cutfast.app"),
   title: "CutFast - Smart Text Shortcuts",
   description: "Boost your productivity with intelligent text shortcuts. Create, manage, and use custom shortcuts across all your favorite apps and websites.",
   keywords: ["text shortcuts", "productivity", "automation", "text expansion", "keyboard shortcuts"],
