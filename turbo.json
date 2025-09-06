@@ -3,11 +3,23 @@
   "tasks": {
     "build": {
       "dependsOn": ["^build"],
-      "outputs": [".next/**", "!.next/cache/**","dist/**"]
+      "outputs": [".next/**", "!.next/cache/**", "dist/**"]
     },
+
+    "web#build": {
+      "env": ["DATABASE_URL", "BETTER_AUTH_SECRET"],
+      "passThroughEnv": ["DATABASE_URL", "BETTER_AUTH_SECRET"]
+    },
+
+    "extension#build": {
+      "env": ["VITE_PUBLIC_API_URL"],
+      "passThroughEnv": ["VITE_PUBLIC_API_URL"]
+    },
+
     "check-types": {
       "dependsOn": ["^check-types"]
     },
+
     "dev": {
       "persistent": true,
       "cache": false
