@@ -6,7 +6,7 @@
   "author": "Himanshu Kumar Dutt",
   "license": "MIT",
   "scripts": {
-    "build": "dotenv -e .env -- next build",
+    "build": "dotenv -e .env -- drizzle-kit push && next build",
     "check": "biome check .",
     "check:unsafe": "biome check --write --unsafe .",
     "check:write": "biome check --write .",

@@ -1,4 +1,3 @@
-import { Database, Shield, Smartphone, Zap } from "lucide-react";
 import { LoginForm } from "@/components/auth/LoginForm";
 import { SignupForm } from "@/components/auth/SignupForm";
 import { Badge } from "@/components/ui/badge";
@@ -10,6 +9,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Database, Shield, Smartphone, Zap } from "lucide-react";
 
 export default function Home() {
   return (
@@ -18,7 +18,7 @@ export default function Home() {
       <div className="relative overflow-hidden">
         <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-secondary/5" />
         <div className="relative mx-auto max-w-7xl px-4 py-24 sm:px-6 lg:px-8">
-          <div className="text-center">
+          <div className="text-center flex flex-col justify-center">
             <Badge variant="secondary" className="mb-4">
               <Zap className="mr-1 h-3 w-3" />
               Local-First Text Shortcuts
@@ -30,6 +30,8 @@ export default function Home() {
               Instantaneous, offline-capable text expansion platform. Transform
               how you write with intelligent shortcuts that work everywhere.
             </p>
+          <a className="mx-auto max-w-2xl" href="https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2FHimanshuKumarDutt094%2Fcutfast&env=DATABASE_URL,BETTER_AUTH_SECRET&envDescription=we%20need%20a%20deployed%20postgres%20databse%20url%20as%20well%20as%20a%20secret%20to%20hash%20your%20passwords&project-name=cutfast-dashboard&repository-name=cutfast-dashboard&skippable-integrations=1&root-directory=src/web
+"><img src="https://vercel.com/button" alt="Deploy with Vercel"/></a>
           </div>
         </div>
       </div>
