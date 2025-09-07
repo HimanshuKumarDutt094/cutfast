@@ -8,8 +8,6 @@ class CutFastBackground {
 	private isInitialized = false;
 	private initializationPromise: Promise<void> | null = null;
 
-
-	
 	constructor() {
 		this.init();
 	}
@@ -35,7 +33,7 @@ class CutFastBackground {
 			// Set up message listeners
 			this.setupMessageListeners();
 
-			// Set up command listeners  
+			// Set up command listeners
 			this.setupCommandListeners();
 
 			// Check for existing authentication
@@ -54,32 +52,30 @@ class CutFastBackground {
 	}
 
 	private setupMessageListeners() {
-		browser.runtime.onMessage.addListener(
-			async (message: any, sender: any) => {
-				console.log("Received message:", message);
+		browser.runtime.onMessage.addListener(async (message: any, sender: any) => {
+			console.log("Received message:", message);
 
-				try {
-					// Ensure we're initialized before handling any messages
-					await this.ensureInitialized();
+			try {
+				// Ensure we're initialized before handling any messages
+				await this.ensureInitialized();
 
-					switch (message.type) {
-						case "QUERY_SHORTCUT":
-							return await this.handleShortcutQuery(message.payload);
-						case "TRIGGER_AUTOCOMPLETE":
-							return await this.handleAutocompleteTrigger(sender);
-						default:
-							console.warn("Unknown message type:", message.type);
-							return { success: false, error: "Unknown message type" };
-					}
-				} catch (error) {
-					console.error("Error handling message:", error);
-					return { 
-						success: false, 
-						error: error instanceof Error ? error.message : "Unknown error" 
-					};
+				switch (message.type) {
+					case "QUERY_SHORTCUT":
+						return await this.handleShortcutQuery(message.payload);
+					case "TRIGGER_AUTOCOMPLETE":
+						return await this.handleAutocompleteTrigger(sender);
+					default:
+						console.warn("Unknown message type:", message.type);
+						return { success: false, error: "Unknown message type" };
 				}
+			} catch (error) {
+				console.error("Error handling message:", error);
+				return {
+					success: false,
+					error: error instanceof Error ? error.message : "Unknown error",
+				};
 			}
-		);
+		});
 	}
 
 	private setupCommandListeners() {
@@ -103,7 +99,10 @@ class CutFastBackground {
 
 	private async checkAuthentication() {
 		try {
-			const result = await browser.storage.local.get(["accessToken", "refreshToken"]);
+			const result = await browser.storage.local.get([
+				"accessToken",
+				"refreshToken",
+			]);
 
 			if (result.accessToken) {
 				this.isAuthenticated = true;
@@ -127,36 +126,39 @@ class CutFastBackground {
 			await cutfastDb.ensureOpen();
 
 			const shortcut = await cutfastDb.getShortcut(payload.key);
-			
-			console.log(`Shortcut query for "${payload.key}":`, shortcut ? "found" : "not found");
-			
+
+			console.log(
+				`Shortcut query for "${payload.key}":`,
+				shortcut ? "found" : "not found",
+			);
+
 			return { success: true, data: shortcut };
 		} catch (error: unknown) {
 			console.error("Failed to query shortcut:", error);
-			
+
 			// Try to recover from database connection issues
 			if (error instanceof Error && error.message.includes("Database")) {
 				try {
 					console.log("Attempting database recovery...");
 					await cutfastDb.initialize();
 					await cutfastDb.ensureOpen();
-					
+
 					const shortcut = await cutfastDb.getShortcut(payload.key);
 					console.log("Database recovery successful");
-					
+
 					return { success: true, data: shortcut };
 				} catch (recoveryError) {
 					console.error("Database recovery failed:", recoveryError);
-					return { 
-						success: false, 
-						error: "Database connection failed. Please reload the extension." 
+					return {
+						success: false,
+						error: "Database connection failed. Please reload the extension.",
 					};
 				}
 			}
-			
-			return { 
-				success: false, 
-				error: error instanceof Error ? error.message : "Unknown error" 
+
+			return {
+				success: false,
+				error: error instanceof Error ? error.message : "Unknown error",
 			};
 		}
 	}
@@ -170,13 +172,19 @@ class CutFastBackground {
 			return { success: true };
 		} catch (error: unknown) {
 			console.error("Failed to trigger autocomplete:", error);
-			return { success: false, error: error instanceof Error ? error.message : "Unknown error" };
+			return {
+				success: false,
+				error: error instanceof Error ? error.message : "Unknown error",
+			};
 		}
 	}
 
 	private async handleAutocompleteCommand() {
 		try {
-			const tabs = await browser.tabs.query({ active: true, currentWindow: true });
+			const tabs = await browser.tabs.query({
+				active: true,
+				currentWindow: true,
+			});
 
 			if (tabs[0]) {
 				await browser.tabs.sendMessage(tabs[0].id!, {
@@ -188,7 +196,10 @@ class CutFastBackground {
 		}
 	}
 
-	public async authenticate(tokens: { accessToken: string; refreshToken: string }) {
+	public async authenticate(tokens: {
+		accessToken: string;
+		refreshToken: string;
+	}) {
 		try {
 			await browser.storage.local.set(tokens);
 			this.isAuthenticated = true;
@@ -215,9 +226,12 @@ class CutFastBackground {
 		}
 
 		// Sync every 5 minutes
-		this.syncInterval = setInterval(() => {
-			this.syncWithServer();
-		}, 5 * 60 * 1000);
+		this.syncInterval = setInterval(
+			() => {
+				this.syncWithServer();
+			},
+			5 * 60 * 1000,
+		);
 
 		// Initial sync
 		this.syncWithServer();
@@ -233,17 +247,24 @@ class CutFastBackground {
 			console.log("Starting sync with server...");
 
 			const storage = await browser.storage.local.get(["lastSyncTimestamp"]);
-			const lastSync = storage.lastSyncTimestamp ? new Date(storage.lastSyncTimestamp as string) : new Date(0);
+			const lastSync = storage.lastSyncTimestamp
+				? new Date(storage.lastSyncTimestamp as string)
+				: new Date(0);
 
 			const apiUrl = await getBaseUrl();
-			const input = encodeURIComponent(JSON.stringify({ json: { since: lastSync.toISOString() } }));
-			const response = await fetch(`${apiUrl}/api/trpc/shortcuts.updatedSince?input=${input}`, {
-				method: 'GET',
-				credentials: 'include',
-				headers: {
-					'content-type': 'application/json',
+			const input = encodeURIComponent(
+				JSON.stringify({ json: { since: lastSync.toISOString() } }),
+			);
+			const response = await fetch(
+				`${apiUrl}/api/trpc/shortcuts.updatedSince?input=${input}`,
+				{
+					method: "GET",
+					credentials: "include",
+					headers: {
+						"content-type": "application/json",
+					},
 				},
-			});
+			);
 
 			if (!response.ok) {
 				throw new Error(`HTTP error! status: ${response.status}`);
@@ -256,7 +277,7 @@ class CutFastBackground {
 				// Ensure database is ready before bulk upsert
 				await this.ensureInitialized();
 				await cutfastDb.ensureOpen();
-				
+
 				const upserted = await cutfastDb.bulkUpsertShortcuts(updatedShortcuts);
 				console.log(`Synced ${upserted} shortcuts from server`);
 			}

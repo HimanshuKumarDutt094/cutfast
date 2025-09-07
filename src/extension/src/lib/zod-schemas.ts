@@ -5,8 +5,14 @@ export const ShortcutSchema = z.object({
 	id: z.string().uuid(),
 	user_id: z.string(),
 	category_id: z.string().uuid().optional(),
-	shortcut_key: z.string().min(1, "Shortcut key is required").max(50, "Shortcut key too long"),
-	content: z.string().min(1, "Content is required").max(10000, "Content too long"),
+	shortcut_key: z
+		.string()
+		.min(1, "Shortcut key is required")
+		.max(50, "Shortcut key too long"),
+	content: z
+		.string()
+		.min(1, "Content is required")
+		.max(10000, "Content too long"),
 	last_modified_at: z.string(),
 	is_synced: z.boolean().default(false),
 	created_at: z.string(),
@@ -17,7 +23,10 @@ export const ShortcutSchema = z.object({
 export const CategorySchema = z.object({
 	id: z.string().uuid(),
 	user_id: z.string(),
-	name: z.string().min(1, "Category name is required").max(100, "Category name too long"),
+	name: z
+		.string()
+		.min(1, "Category name is required")
+		.max(100, "Category name too long"),
 	created_at: z.string(),
 	updated_at: z.string(),
 });
@@ -33,8 +42,14 @@ export const UserSchema = z.object({
 
 // Schema for creating a new shortcut
 export const CreateShortcutSchema = z.object({
-	shortcut_key: z.string().min(1, "Shortcut key is required").max(50, "Shortcut key too long"),
-	content: z.string().min(1, "Content is required").max(10000, "Content too long"),
+	shortcut_key: z
+		.string()
+		.min(1, "Shortcut key is required")
+		.max(50, "Shortcut key too long"),
+	content: z
+		.string()
+		.min(1, "Content is required")
+		.max(10000, "Content too long"),
 	category_id: z.string().uuid().optional(),
 });
 
@@ -47,7 +62,10 @@ export const UpdateShortcutSchema = z.object({
 
 // Schema for creating a new category
 export const CreateCategorySchema = z.object({
-	name: z.string().min(1, "Category name is required").max(100, "Category name too long"),
+	name: z
+		.string()
+		.min(1, "Category name is required")
+		.max(100, "Category name too long"),
 });
 
 // Schema for updating a category
@@ -125,7 +143,9 @@ export function safeValidateCategory(data: unknown): Category | null {
 	}
 }
 
-export function safeValidateCreateShortcut(data: unknown): CreateShortcut | null {
+export function safeValidateCreateShortcut(
+	data: unknown,
+): CreateShortcut | null {
 	try {
 		return CreateShortcutSchema.parse(data);
 	} catch {
@@ -133,7 +153,9 @@ export function safeValidateCreateShortcut(data: unknown): CreateShortcut | null
 	}
 }
 
-export function safeValidateUpdateShortcut(data: unknown): UpdateShortcut | null {
+export function safeValidateUpdateShortcut(
+	data: unknown,
+): UpdateShortcut | null {
 	try {
 		return UpdateShortcutSchema.parse(data);
 	} catch {

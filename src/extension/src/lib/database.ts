@@ -2,189 +2,202 @@ import Dexie, { type Table } from "dexie";
 
 // Database interfaces
 export interface Shortcut {
-  id: string;
-  userId: string;
-  categoryId?: string | null;
-  shortcutKey: string;
-  content: string;
-  lastModifiedAt: Date;
-  isSynced: boolean;
-  createdAt: Date;
-  updatedAt: Date;
+	id: string;
+	userId: string;
+	categoryId?: string | null;
+	shortcutKey: string;
+	content: string;
+	lastModifiedAt: Date;
+	isSynced: boolean;
+	createdAt: Date;
+	updatedAt: Date;
 }
 
 export interface Category {
-  id: string;
-  userId: string;
-  name: string;
-  createdAt: Date;
-  updatedAt: Date;
+	id: string;
+	userId: string;
+	name: string;
+	createdAt: Date;
+	updatedAt: Date;
 }
 
 export class CutFastDatabase extends Dexie {
-  shortcuts!: Table<Shortcut>;
-  categories!: Table<Category>;
+	shortcuts!: Table<Shortcut>;
+	categories!: Table<Category>;
 
-  constructor() {
-    super("CutFastDB");
+	constructor() {
+		super("CutFastDB");
 
-    this.version(1).stores({
-      shortcuts: "&id, userId, categoryId, shortcutKey, lastModifiedAt, isSynced, createdAt, updatedAt",
-      categories: "&id, userId, name, createdAt, updatedAt",
-    });
-  }
+		this.version(1).stores({
+			shortcuts:
+				"&id, userId, categoryId, shortcutKey, lastModifiedAt, isSynced, createdAt, updatedAt",
+			categories: "&id, userId, name, createdAt, updatedAt",
+		});
+	}
 
-  async initialize() {
-    try {
-      console.log("Initializing CutFast Dexie database...");
-      // Dexie opens automatically when first accessed, but we can explicitly open if needed
-      if (!this.isOpen()) {
-        await this.open();
-      }
-      console.log("CutFast database initialized successfully");
-    } catch (error) {
-      console.error("Failed to initialize database:", error);
-      throw error;
-    }
-  }
+	async initialize() {
+		try {
+			console.log("Initializing CutFast Dexie database...");
+			// Dexie opens automatically when first accessed, but we can explicitly open if needed
+			if (!this.isOpen()) {
+				await this.open();
+			}
+			console.log("CutFast database initialized successfully");
+		} catch (error) {
+			console.error("Failed to initialize database:", error);
+			throw error;
+		}
+	}
 
-  // Service worker specific method to ensure database is accessible
-  async ensureOpen(): Promise<void> {
-    try {
-      if (!this.isOpen()) {
-        console.log("Service worker: Database not open, reopening...");
-        await this.open();
-        console.log("Service worker: Database reopened successfully");
-      }
-    } catch (error) {
-      console.error("Service worker: Failed to ensure database is open:", error);
-      throw error;
-    }
-  }
+	// Service worker specific method to ensure database is accessible
+	async ensureOpen(): Promise<void> {
+		try {
+			if (!this.isOpen()) {
+				console.log("Service worker: Database not open, reopening...");
+				await this.open();
+				console.log("Service worker: Database reopened successfully");
+			}
+		} catch (error) {
+			console.error(
+				"Service worker: Failed to ensure database is open:",
+				error,
+			);
+			throw error;
+		}
+	}
 
-  async getShortcut(key: string): Promise<Shortcut | null> {
-    try {
-      // In service worker context, we need to ensure database is accessible
-      // Service workers can be terminated and restarted, so we need to reopen if needed
-      if (!this.isOpen()) {
-        console.log("Database not open, reopening...");
-        await this.open();
-      }
+	async getShortcut(key: string): Promise<Shortcut | null> {
+		try {
+			// In service worker context, we need to ensure database is accessible
+			// Service workers can be terminated and restarted, so we need to reopen if needed
+			if (!this.isOpen()) {
+				console.log("Database not open, reopening...");
+				await this.open();
+			}
 
-      const shortcut = await this.shortcuts
-        .where("shortcutKey")
-        .equals(key)
-        .first();
+			const shortcut = await this.shortcuts
+				.where("shortcutKey")
+				.equals(key)
+				.first();
 
-      return shortcut || null;
-    } catch (error) {
-      console.error("Failed to get shortcut:", error);
-      // In service worker, database might need to be reinitialized
-      throw new Error("Database not initialized");
-    }
-  }
+			return shortcut || null;
+		} catch (error) {
+			console.error("Failed to get shortcut:", error);
+			// In service worker, database might need to be reinitialized
+			throw new Error("Database not initialized");
+		}
+	}
 
-  async getAllShortcuts(): Promise<{ id: string; shortcut_key: string; content: string; category_name: string }[]> {
-    try {
-      const shortcuts = await this.shortcuts
-        .orderBy("lastModifiedAt")
-        .reverse()
-        .toArray();
+	async getAllShortcuts(): Promise<
+		{
+			id: string;
+			shortcut_key: string;
+			content: string;
+			category_name: string;
+		}[]
+	> {
+		try {
+			const shortcuts = await this.shortcuts
+				.orderBy("lastModifiedAt")
+				.reverse()
+				.toArray();
 
-      // Get categories for lookup
-      const categories = await this.categories.toArray();
-      const categoryMap = new Map(categories.map(c => [c.id, c.name]));
+			// Get categories for lookup
+			const categories = await this.categories.toArray();
+			const categoryMap = new Map(categories.map((c) => [c.id, c.name]));
 
-      return shortcuts.map(shortcut => ({
-        id: shortcut.id,
-        shortcut_key: shortcut.shortcutKey,
-        content: shortcut.content,
-        category_name: shortcut.categoryId ? categoryMap.get(shortcut.categoryId) || "" : "",
-      }));
-    } catch (error) {
-      console.error("Failed to get shortcuts:", error);
-      return [];
-    }
-  }
+			return shortcuts.map((shortcut) => ({
+				id: shortcut.id,
+				shortcut_key: shortcut.shortcutKey,
+				content: shortcut.content,
+				category_name: shortcut.categoryId
+					? categoryMap.get(shortcut.categoryId) || ""
+					: "",
+			}));
+		} catch (error) {
+			console.error("Failed to get shortcuts:", error);
+			return [];
+		}
+	}
 
-  async getCategories(): Promise<Category[]> {
-    try {
-      return await this.categories.orderBy("name").toArray();
-    } catch (error) {
-      console.error("Failed to get categories:", error);
-      return [];
-    }
-  }
+	async getCategories(): Promise<Category[]> {
+		try {
+			return await this.categories.orderBy("name").toArray();
+		} catch (error) {
+			console.error("Failed to get categories:", error);
+			return [];
+		}
+	}
 
+	// Bulk upsert shortcuts from backend sync
+	async bulkUpsertShortcuts(
+		items: ReadonlyArray<{
+			id: string;
+			userId: string;
+			shortcutKey: string;
+			content: string;
+			categoryId?: string | null;
+		}>,
+	): Promise<number> {
+		let upserted = 0;
 
+		try {
+			await this.transaction("rw", this.shortcuts, async () => {
+				for (const item of items) {
+					const existing = await this.shortcuts.get(item.id);
 
-  // Bulk upsert shortcuts from backend sync
-  async bulkUpsertShortcuts(items: ReadonlyArray<{
-    id: string;
-    userId: string;
-    shortcutKey: string;
-    content: string;
-    categoryId?: string | null;
-  }>): Promise<number> {
-    let upserted = 0;
+					if (existing) {
+						// Update existing
+						await this.shortcuts.update(item.id, {
+							shortcutKey: item.shortcutKey,
+							content: item.content,
+							categoryId: item.categoryId ?? null,
+							isSynced: true,
+							updatedAt: new Date(),
+							lastModifiedAt: new Date(),
+						});
+					} else {
+						// Create new
+						await this.shortcuts.add({
+							id: item.id,
+							userId: item.userId,
+							categoryId: item.categoryId ?? null,
+							shortcutKey: item.shortcutKey,
+							content: item.content,
+							lastModifiedAt: new Date(),
+							isSynced: true,
+							createdAt: new Date(),
+							updatedAt: new Date(),
+						});
+					}
+					upserted++;
+				}
+			});
+		} catch (error) {
+			console.error("Failed to bulk upsert shortcuts:", error);
+		}
 
-    try {
-      await this.transaction('rw', this.shortcuts, async () => {
-        for (const item of items) {
-          const existing = await this.shortcuts.get(item.id);
+		return upserted;
+	}
 
-          if (existing) {
-            // Update existing
-            await this.shortcuts.update(item.id, {
-              shortcutKey: item.shortcutKey,
-              content: item.content,
-              categoryId: item.categoryId ?? null,
-              isSynced: true,
-              updatedAt: new Date(),
-              lastModifiedAt: new Date(),
-            });
-          } else {
-            // Create new
-            await this.shortcuts.add({
-              id: item.id,
-              userId: item.userId,
-              categoryId: item.categoryId ?? null,
-              shortcutKey: item.shortcutKey,
-              content: item.content,
-              lastModifiedAt: new Date(),
-              isSynced: true,
-              createdAt: new Date(),
-              updatedAt: new Date(),
-            });
-          }
-          upserted++;
-        }
-      });
-    } catch (error) {
-      console.error("Failed to bulk upsert shortcuts:", error);
-    }
+	async clearShortcuts() {
+		await this.shortcuts.clear();
+		console.log("Shortcuts cleared");
+	}
 
-    return upserted;
-  }
+	async clearCategories() {
+		await this.categories.clear();
+		console.log("Categories cleared");
+	}
 
-  async clearShortcuts() {
-    await this.shortcuts.clear();
-    console.log("Shortcuts cleared");
-  }
+	async close() {
+		this.close();
+		console.log("Database closed");
+	}
 
-  async clearCategories() {
-    await this.categories.clear();
-    console.log("Categories cleared");
-  }
-
-  async close() {
-    this.close();
-    console.log("Database closed");
-  }
-
-  get isReady(): boolean {
-    return this.isOpen();
-  }
+	get isReady(): boolean {
+		return this.isOpen();
+	}
 }
 
 // Export singleton instance

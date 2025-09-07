@@ -1,7 +1,11 @@
 import browser from "webextension-polyfill";
 
 class CutFastContentScript {
-	private currentInput: HTMLInputElement | HTMLTextAreaElement | HTMLElement | null = null;
+	private currentInput:
+		| HTMLInputElement
+		| HTMLTextAreaElement
+		| HTMLElement
+		| null = null;
 	private currentTrigger = "";
 	private previewElement: HTMLElement | null = null;
 	private retryCount = 0;
@@ -19,26 +23,28 @@ class CutFastContentScript {
 	}
 
 	private setupEventListeners() {
-		document.addEventListener("input", this.handleInput.bind(this) as EventListener, true);
+		document.addEventListener(
+			"input",
+			this.handleInput.bind(this) as EventListener,
+			true,
+		);
 		document.addEventListener("keydown", this.handleKeydown.bind(this), true);
 		document.addEventListener("focus", this.handleFocus.bind(this), true);
 		document.addEventListener("blur", this.handleBlur.bind(this), true);
 	}
 
 	private setupMessageListeners() {
-		browser.runtime.onMessage.addListener(
-			async (message: any, sender: any) => {
-				console.log("Content script received message:", message);
+		browser.runtime.onMessage.addListener(async (message: any, sender: any) => {
+			console.log("Content script received message:", message);
 
-				switch (message.type) {
-					case "TRIGGER_AUTOCOMPLETE":
-						await this.triggerAutocomplete();
-						break;
-					default:
-						console.warn("Unknown message type:", message.type);
-				}
+			switch (message.type) {
+				case "TRIGGER_AUTOCOMPLETE":
+					await this.triggerAutocomplete();
+					break;
+				default:
+					console.warn("Unknown message type:", message.type);
 			}
-		);
+		});
 	}
 
 	private handleFocus(event: FocusEvent) {
@@ -116,7 +122,13 @@ class CutFastContentScript {
 			return;
 		}
 
-		if (event.ctrlKey && event.shiftKey && event.key === " " && this.currentTrigger && this.previewElement) {
+		if (
+			event.ctrlKey &&
+			event.shiftKey &&
+			event.key === " " &&
+			this.currentTrigger &&
+			this.previewElement
+		) {
 			event.preventDefault();
 			this.applyAutocomplete(target);
 		}
@@ -126,7 +138,10 @@ class CutFastContentScript {
 		}
 	}
 
-	private detectTrigger(value: string, cursorPosition: number): { trigger: string; start: number; end: number } | null {
+	private detectTrigger(
+		value: string,
+		cursorPosition: number,
+	): { trigger: string; start: number; end: number } | null {
 		const beforeCursor = value.substring(0, cursorPosition);
 		const triggerRegex = /(\/[\w-]+)$/;
 		const match = beforeCursor.match(triggerRegex);
@@ -146,7 +161,7 @@ class CutFastContentScript {
 		await this.sendMessageWithRetry(
 			{
 				type: "QUERY_SHORTCUT",
-				payload: { key: trigger }
+				payload: { key: trigger },
 			},
 			(response) => {
 				if (response && response.success && response.data) {
@@ -156,11 +171,15 @@ class CutFastContentScript {
 					console.log("Shortcut not found");
 					this.updatePreview("No shortcut found");
 				}
-			}
+			},
 		);
 	}
 
-	private async sendMessageWithRetry(message: any, onSuccess: (response: any) => void, attempt: number = 1): Promise<void> {
+	private async sendMessageWithRetry(
+		message: any,
+		onSuccess: (response: any) => void,
+		attempt: number = 1,
+	): Promise<void> {
 		try {
 			// Check extension context
 			if (!browser.runtime?.id) {
@@ -170,20 +189,24 @@ class CutFastContentScript {
 			}
 
 			const response = await browser.runtime.sendMessage(message);
-			
+
 			// Reset retry count on success
 			this.retryCount = 0;
 			onSuccess(response);
-			
 		} catch (error) {
 			console.error(`Message attempt ${attempt} failed:`, error);
-			
+
 			// Handle extension context invalidation specifically
-			if (error instanceof Error && error.message.includes("Extension context invalidated")) {
+			if (
+				error instanceof Error &&
+				error.message.includes("Extension context invalidated")
+			) {
 				if (attempt < this.maxRetries) {
-					console.log(`Retrying message in ${attempt * 1000}ms... (attempt ${attempt + 1}/${this.maxRetries})`);
+					console.log(
+						`Retrying message in ${attempt * 1000}ms... (attempt ${attempt + 1}/${this.maxRetries})`,
+					);
 					this.updatePreview(`Reconnecting... (${attempt}/${this.maxRetries})`);
-					
+
 					setTimeout(() => {
 						this.sendMessageWithRetry(message, onSuccess, attempt + 1);
 					}, attempt * 1000); // Exponential backoff
@@ -197,7 +220,10 @@ class CutFastContentScript {
 		}
 	}
 
-	private showPreview(input: HTMLElement, triggerMatch: { trigger: string; start: number; end: number }) {
+	private showPreview(
+		input: HTMLElement,
+		triggerMatch: { trigger: string; start: number; end: number },
+	) {
 		if (this.previewElement) {
 			this.removePreview();
 		}
@@ -230,7 +256,13 @@ class CutFastContentScript {
 			if (content.length > 50) {
 				displayContent = content.substring(0, 50) + "...";
 			}
-			if (content !== "No shortcut found" && !content.includes("Error") && !content.includes("Extension") && content !== "Loading..." && !content.includes("Reconnecting")) {
+			if (
+				content !== "No shortcut found" &&
+				!content.includes("Error") &&
+				!content.includes("Extension") &&
+				content !== "Loading..." &&
+				!content.includes("Reconnecting")
+			) {
 				displayContent += "\n\nPress Ctrl+Shift+Space to accept";
 			}
 			this.previewElement.textContent = displayContent;
@@ -253,14 +285,20 @@ class CutFastContentScript {
 		}
 	}
 
-	private positionPreview(input: HTMLElement, triggerMatch: { trigger: string; start: number; end: number }) {
+	private positionPreview(
+		input: HTMLElement,
+		triggerMatch: { trigger: string; start: number; end: number },
+	) {
 		if (!this.previewElement) return;
 
 		const inputRect = input.getBoundingClientRect();
 		let textBeforeTrigger: string;
 
 		if (input.contentEditable === "true") {
-			textBeforeTrigger = (input.textContent || "").substring(0, triggerMatch.start);
+			textBeforeTrigger = (input.textContent || "").substring(
+				0,
+				triggerMatch.start,
+			);
 		} else {
 			const inputElement = input as HTMLInputElement | HTMLTextAreaElement;
 			textBeforeTrigger = inputElement.value.substring(0, triggerMatch.start);
@@ -298,7 +336,10 @@ class CutFastContentScript {
 		}
 	}
 
-	private setCursorPositionInContentEditable(element: HTMLElement, position: number) {
+	private setCursorPositionInContentEditable(
+		element: HTMLElement,
+		position: number,
+	) {
 		const selection = window.getSelection();
 		const range = document.createRange();
 
@@ -307,7 +348,11 @@ class CutFastContentScript {
 		let targetNode: Node | null = null;
 		let targetOffset = 0;
 
-		const walker = document.createTreeWalker(element, NodeFilter.SHOW_TEXT, null);
+		const walker = document.createTreeWalker(
+			element,
+			NodeFilter.SHOW_TEXT,
+			null,
+		);
 
 		let node = walker.nextNode();
 		while (node) {
@@ -348,7 +393,7 @@ class CutFastContentScript {
 		await this.sendMessageWithRetry(
 			{
 				type: "QUERY_SHORTCUT",
-				payload: { key: this.currentTrigger }
+				payload: { key: this.currentTrigger },
 			},
 			(response) => {
 				if (response && response.success && response.data) {
@@ -370,14 +415,18 @@ class CutFastContentScript {
 							cursorPosition = preCursorRange.toString().length;
 
 							// Replace the trigger with the expanded content
-							const beforeTrigger = value.substring(0, cursorPosition - this.currentTrigger.length);
+							const beforeTrigger = value.substring(
+								0,
+								cursorPosition - this.currentTrigger.length,
+							);
 							const afterTrigger = value.substring(cursorPosition);
 							const newValue = beforeTrigger + shortcut.content + afterTrigger;
 
 							input.textContent = newValue;
 
 							// Update cursor position
-							const newCursorPosition = beforeTrigger.length + shortcut.content.length;
+							const newCursorPosition =
+								beforeTrigger.length + shortcut.content.length;
 							this.setCursorPositionInContentEditable(input, newCursorPosition);
 
 							// Trigger input event
@@ -385,20 +434,29 @@ class CutFastContentScript {
 						}
 					} else {
 						// Handle regular input/textarea elements
-						const inputElement = input as HTMLInputElement | HTMLTextAreaElement;
+						const inputElement = input as
+							| HTMLInputElement
+							| HTMLTextAreaElement;
 						const value = inputElement.value;
 						const cursorPosition = inputElement.selectionStart || 0;
 
 						// Replace the trigger with the expanded content
-						const beforeTrigger = value.substring(0, cursorPosition - this.currentTrigger.length);
+						const beforeTrigger = value.substring(
+							0,
+							cursorPosition - this.currentTrigger.length,
+						);
 						const afterTrigger = value.substring(cursorPosition);
 						const newValue = beforeTrigger + shortcut.content + afterTrigger;
 
 						inputElement.value = newValue;
 
 						// Update cursor position
-						const newCursorPosition = beforeTrigger.length + shortcut.content.length;
-						inputElement.setSelectionRange(newCursorPosition, newCursorPosition);
+						const newCursorPosition =
+							beforeTrigger.length + shortcut.content.length;
+						inputElement.setSelectionRange(
+							newCursorPosition,
+							newCursorPosition,
+						);
 
 						// Trigger input event
 						inputElement.dispatchEvent(new Event("input", { bubbles: true }));
@@ -408,19 +466,30 @@ class CutFastContentScript {
 					this.removePreview();
 					this.currentTrigger = "";
 				}
-			}
+			},
 		);
 	}
 
 	private isTextInput(element: HTMLElement): boolean {
-		return element.tagName === "INPUT" || element.tagName === "TEXTAREA" ||
-			   element.contentEditable === "true";
+		return (
+			element.tagName === "INPUT" ||
+			element.tagName === "TEXTAREA" ||
+			element.contentEditable === "true"
+		);
 	}
 
 	private isLaTeXWebsite(): boolean {
 		const hostname = window.location.hostname.toLowerCase();
-		const latexSites = ['overleaf.com', 'latex.org', 'tex.stackexchange.com', 'sharelatex.com'];
-		return latexSites.some(site => hostname.includes(site)) || document.querySelector('script[src*="mathjax"]') !== null;
+		const latexSites = [
+			"overleaf.com",
+			"latex.org",
+			"tex.stackexchange.com",
+			"sharelatex.com",
+		];
+		return (
+			latexSites.some((site) => hostname.includes(site)) ||
+			document.querySelector('script[src*="mathjax"]') !== null
+		);
 	}
 }
 

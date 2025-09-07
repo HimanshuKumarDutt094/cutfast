@@ -12,7 +12,10 @@ function TooltipPreview({ content, position, onClose }: TooltipPreviewProps) {
 
 	useEffect(() => {
 		const handleClickOutside = (event: MouseEvent) => {
-			if (tooltipRef.current && !tooltipRef.current.contains(event.target as Node)) {
+			if (
+				tooltipRef.current &&
+				!tooltipRef.current.contains(event.target as Node)
+			) {
 				onClose();
 			}
 		};
@@ -46,7 +49,8 @@ function TooltipPreview({ content, position, onClose }: TooltipPreviewProps) {
 				{content}
 			</div>
 			<div className="text-xs text-gray-500 mt-2 border-t pt-1">
-				<span className="font-medium">Tab</span> to insert • <span className="font-medium">Esc</span> to cancel
+				<span className="font-medium">Tab</span> to insert •{" "}
+				<span className="font-medium">Esc</span> to cancel
 			</div>
 		</div>
 	);
@@ -56,14 +60,16 @@ function TooltipPreview({ content, position, onClose }: TooltipPreviewProps) {
 export function renderTooltipPreview(
 	content: string,
 	position: { x: number; y: number },
-	onClose: () => void
+	onClose: () => void,
 ): () => void {
 	const container = document.createElement("div");
 	container.id = "cutfast-tooltip-container";
 	document.body.appendChild(container);
 
 	const root = createRoot(container);
-	root.render(<TooltipPreview content={content} position={position} onClose={onClose} />);
+	root.render(
+		<TooltipPreview content={content} position={position} onClose={onClose} />,
+	);
 
 	// Return cleanup function
 	return () => {

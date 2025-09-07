@@ -32,7 +32,11 @@ export function useAuth() {
 		return result;
 	};
 
-	const register = async (email: string, password: string, name: string = "User") => {
+	const register = async (
+		email: string,
+		password: string,
+		name: string = "User",
+	) => {
 		const result = await signUp.email({
 			email,
 			password,
