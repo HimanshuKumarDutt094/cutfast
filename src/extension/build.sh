@@ -86,34 +86,52 @@ install_dependencies() {
 # Function to build for Firefox
 build_firefox() {
     print_info "Building Firefox extension..."
-    pnpm run build:firefox
+    if ! pnpm run build:firefox; then
+        print_error "Firefox build failed!"
+        exit 1
+    fi
     print_success "Firefox extension built successfully in dist-firefox/"
 
     # Create zip file for Firefox
     if command_exists zip; then
-        cd dist-firefox
-        zip -r ../cutfast-firefox-extension.zip .
-        cd ..
-        print_success "Firefox extension packaged as cutfast-firefox-extension.zip"
+        if [ -d "dist-firefox" ]; then
+            cd dist-firefox
+            zip -r ../cutfast-firefox-extension.zip .
+            cd ..
+            print_success "Firefox extension packaged as cutfast-firefox-extension.zip"
+        else
+            print_error "dist-firefox directory not found!"
+            exit 1
+        fi
     else
-        print_warning "zip command not found. Skipping packaging."
+        print_error "zip command not found. Cannot create Firefox extension package."
+        exit 1
     fi
 }
 
 # Function to build for Chrome
 build_chrome() {
     print_info "Building Chrome extension..."
-    pnpm run build:chrome
+    if ! pnpm run build:chrome; then
+        print_error "Chrome build failed!"
+        exit 1
+    fi
     print_success "Chrome extension built successfully in dist-chrome/"
 
     # Create zip file for Chrome
     if command_exists zip; then
-        cd dist-chrome
-        zip -r ../cutfast-chrome-extension.zip .
-        cd ..
-        print_success "Chrome extension packaged as cutfast-chrome-extension.zip"
+        if [ -d "dist-chrome" ]; then
+            cd dist-chrome
+            zip -r ../cutfast-chrome-extension.zip .
+            cd ..
+            print_success "Chrome extension packaged as cutfast-chrome-extension.zip"
+        else
+            print_error "dist-chrome directory not found!"
+            exit 1
+        fi
     else
-        print_warning "zip command not found. Skipping packaging."
+        print_error "zip command not found. Cannot create Chrome extension package."
+        exit 1
     fi
 }
 

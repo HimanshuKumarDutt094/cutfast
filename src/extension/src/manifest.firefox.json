@@ -42,7 +42,7 @@
 	"web_accessible_resources": ["src/ui/*"],
 	"browser_specific_settings": {
 		"gecko": {
-			"id": "adasmobenio@gmail.com",
+			"id": "cutfast@himanshukumardutt094.dev",
 			"strict_min_version": "109.0"
 		}
 	}

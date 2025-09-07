@@ -13,11 +13,10 @@ on:
 
 permissions:
   contents: write
-  packages: write
 
 jobs:
   build-and-release:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
 
     steps:
     - name: Checkout code
@@ -34,72 +33,44 @@ jobs:
     - name: Install dependencies
       run: pnpm install --frozen-lockfile
 
-    - name: Build Firefox extension
+    - name: Set release version
       run: |
-        cd src/extension
-        chmod +x build.sh
-        ./build.sh firefox
-
-    - name: Build Chrome extension
-      run: |
-        cd src/extension
-        ./build.sh chrome
-
-    - name: Create release archives
-      run: |
-        cd src/extension
-        # Create versioned archives
-        VERSION=${{ github.event.inputs.version || github.ref_name }}
-        if [ -f "cutfast-firefox-extension.zip" ]; then
-          cp cutfast-firefox-extension.zip cutfast-firefox-extension-${VERSION}.zip
+        if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+          echo "VERSION=${{ github.event.inputs.version}}" >> $GITHUB_ENV
         else
-          echo "Firefox extension zip not found!"
-          exit 1
+          echo "VERSION=${GITHUB_REF_NAME}" >> $GITHUB_ENV
         fi
-        if [ -f "cutfast-chrome-extension.zip" ]; then
-          cp cutfast-chrome-extension.zip cutfast-chrome-extension-${VERSION}.zip
-        else
-          echo "Chrome extension zip not found!"
-          exit 1
-        fi
+        echo "Using version: $VERSION"
+
+    - name: Build extensions
+      working-directory: src/extension
+      run: pnpm run build:all
+
+    - name: Zip dist folders
+      working-directory: src/extension
+      run: |
+        zip -r cutfast-chrome-${VERSION}.zip dist-chrome
+        zip -r cutfast-firefox-${VERSION}.zip dist-firefox
 
     - name: Create GitHub Release
       uses: softprops/action-gh-release@v2
       with:
-        tag_name: ${{ github.event.inputs.version || github.ref_name }}
-        name: Release ${{ github.event.inputs.version || github.ref_name }}
+        tag_name: ${{ env.VERSION }}
+        name: Release ${{ env.VERSION }}
         body: |
           ## Extension Downloads
 
-          Download the browser extension for your preferred browser:
-
           ### Firefox
-          - [Download Firefox Extension](https://github.com/${{ github.repository }}/releases/download/${{ github.event.inputs.version || github.ref_name }}/cutfast-firefox-extension-${{ github.event.inputs.version || github.ref_name }}.zip)
+          - [Download Firefox Extension](https://github.com/${{ github.repository }}/releases/download/${{ env.VERSION }}/cutfast-firefox-${{ env.VERSION }}.zip)
 
           ### Chrome
-          - [Download Chrome Extension](https://github.com/${{ github.repository }}/releases/download/${{ github.event.inputs.version || github.ref_name }}/cutfast-chrome-extension-${{ github.event.inputs.version || github.ref_name }}.zip)
+          - [Download Chrome Extension](https://github.com/${{ github.repository }}/releases/download/${{ env.VERSION }}/cutfast-chrome-${{ env.VERSION }}.zip)
 
           ## Installation Instructions
+          (same as before…)
 
-          ### Firefox
-          1. Download the Firefox extension zip file
-          2. Open Firefox and go to `about:debugging`
-          3. Click "This Firefox" in the sidebar
-          4. Click "Load Temporary Add-on"
-          5. Select the downloaded zip file
-
-          ### Chrome
-          1. Download the Chrome extension zip file
-          2. Unzip the file to a folder
-          3. Open Chrome and go to `chrome://extensions/`
-          4. Enable "Developer mode" in the top right
-          5. Click "Load unpacked" and select the unzipped folder
-
-          **Note:** These are development builds. For permanent installation, consider publishing to the official stores when possible.
         files: |
-          ./src/extension/cutfast-firefox-extension-${{ github.event.inputs.version || github.ref_name }}.zip
-          ./src/extension/cutfast-chrome-extension-${{ github.event.inputs.version || github.ref_name }}.zip
-        draft: false
-        prerelease: false
+          src/extension/cutfast-firefox-${{ env.VERSION }}.zip
+          src/extension/cutfast-chrome-${{ env.VERSION }}.zip
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
