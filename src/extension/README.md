@@ -6,6 +6,30 @@ A Firefox/Chrome extension for text shortcuts and instant text expansion built w
 
 CutFast is a local-first text shortcut platform that allows users to create and manage text shortcuts for instant expansion across web pages. The extension provides a popup interface for managing shortcuts and a content script that handles text expansion.
 
+## Public API
+
+CutFast uses a companion web API for user authentication, shortcut synchronization, and data management. The extension is pre-configured to use our public API at `https://cutfast-extension.vercel.app`.
+
+### Deploy Your Own API
+
+For privacy, customization, or self-hosting, you can deploy your own instance of the CutFast API:
+
+1. **Visit the API Repository**: Go to [https://cutfast-extension.vercel.app](https://cutfast-extension.vercel.app)
+2. **Click "Deploy with Vercel"**: This will fork and deploy the API to your own Vercel account
+3. **Set up Database**: The deployment includes Neon database setup instructions
+4. **Configure Extension**: Update your extension to use your custom API URL
+
+#### Using Custom API URL
+
+After deploying your own API, configure the extension to use it:
+
+1. Open the CutFast extension popup
+2. Go to Settings
+3. Enter your custom API URL (e.g., `https://your-api.vercel.app`)
+4. Save the configuration
+
+The extension will automatically use your custom API for all operations while maintaining local storage for offline functionality.
+
 ## Build Requirements
 
 ### Operating System
