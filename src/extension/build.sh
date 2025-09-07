@@ -53,30 +53,23 @@ check_nodejs() {
     print_success "Node.js version: $NODE_VERSION"
 }
 
-# Function to check pnpm
-check_pnpm() {
-    if ! command_exists pnpm; then
-        print_error "pnpm is not installed. Please install pnpm 8.0.0 or higher."
-        print_info "Installation: npm install -g pnpm"
+# Function to check npm
+check_npm() {
+    if ! command_exists npm; then
+        print_error "npm is not installed. Please install Node.js which includes npm."
+        print_info "Installation instructions: https://nodejs.org/"
         exit 1
     fi
 
-    PNPM_VERSION=$(pnpm -v)
-    REQUIRED_VERSION="8.0.0"
-
-    if ! [ "$(printf '%s\n' "$REQUIRED_VERSION" "$PNPM_VERSION" | sort -V | head -n1)" = "$REQUIRED_VERSION" ]; then
-        print_error "pnpm version $PNPM_VERSION is not supported. Please upgrade to pnpm 8.0.0 or higher."
-        exit 1
-    fi
-
-    print_success "pnpm version: $PNPM_VERSION"
+    NPM_VERSION=$(npm -v)
+    print_success "npm version: $NPM_VERSION"
 }
 
 # Function to install dependencies
 install_dependencies() {
     print_info "Installing dependencies..."
     if [ ! -d "node_modules" ]; then
-        pnpm install
+        npm ci
         print_success "Dependencies installed successfully"
     else
         print_info "Dependencies already installed"
@@ -86,7 +79,7 @@ install_dependencies() {
 # Function to build for Firefox
 build_firefox() {
     print_info "Building Firefox extension..."
-    pnpm run build:firefox
+    npm run build:firefox
     print_success "Firefox extension built successfully in dist-firefox/"
 
     # Create zip file for Firefox
@@ -103,7 +96,7 @@ build_firefox() {
 # Function to build for Chrome
 build_chrome() {
     print_info "Building Chrome extension..."
-    pnpm run build:chrome
+    npm run build:chrome
     print_success "Chrome extension built successfully in dist-chrome/"
 
     # Create zip file for Chrome
@@ -151,7 +144,7 @@ main() {
 
     # Check prerequisites
     check_nodejs
-    check_pnpm
+    check_npm
 
     # Change to script directory
     SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
