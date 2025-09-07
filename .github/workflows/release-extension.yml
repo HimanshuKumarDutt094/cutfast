@@ -50,8 +50,18 @@ jobs:
         cd src/extension
         # Create versioned archives
         VERSION=${{ github.event.inputs.version || github.ref_name }}
-        cp cutfast-firefox-extension.zip cutfast-firefox-extension-${VERSION}.zip
-        cp cutfast-chrome-extension.zip cutfast-chrome-extension-${VERSION}.zip
+        if [ -f "cutfast-firefox-extension.zip" ]; then
+          cp cutfast-firefox-extension.zip cutfast-firefox-extension-${VERSION}.zip
+        else
+          echo "Firefox extension zip not found!"
+          exit 1
+        fi
+        if [ -f "cutfast-chrome-extension.zip" ]; then
+          cp cutfast-chrome-extension.zip cutfast-chrome-extension-${VERSION}.zip
+        else
+          echo "Chrome extension zip not found!"
+          exit 1
+        fi
 
     - name: Create GitHub Release
       uses: softprops/action-gh-release@v2
