@@ -8,7 +8,6 @@ pnpm-debug.log*
 lerna-debug.log*
 # *.md
 *.txt
-*.zip
 .turbo
 node_modules
 dist
