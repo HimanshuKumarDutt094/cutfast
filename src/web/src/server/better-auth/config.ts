@@ -1,7 +1,7 @@
 import { betterAuth } from "better-auth";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
 import { APIError, createAuthMiddleware } from "better-auth/api";
-import { bearer, jwt } from "better-auth/plugins";
+import { admin, bearer, jwt } from "better-auth/plugins";
 import { count, eq } from "drizzle-orm";
 
 import { db } from "@/server/db";
@@ -67,7 +67,7 @@ export const auth = betterAuth({
     //   redirectURI: "http://localhost:3000/api/auth/callback/github",
     // },
   },
-  plugins: [jwt(), bearer(), userLimitPlugin()],
+  plugins: [jwt(), bearer(), userLimitPlugin(),admin()],
   baseURL: process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:3000",
   trustedOrigins: ["*"],
 });

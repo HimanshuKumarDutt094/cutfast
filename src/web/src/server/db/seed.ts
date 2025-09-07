@@ -1,7 +1,7 @@
-import { eq } from "drizzle-orm";
 import { env } from "@/env";
-import { auth } from "../better-auth";
+import { eq } from "drizzle-orm";
 import { db } from ".";
+import { auth } from "../better-auth";
 import { config, user } from "./schema";
 
 /**
@@ -62,7 +62,19 @@ export async function seedAdminUser() {
       .limit(1);
 
     if (existingAdmin.length > 0) {
-      console.log("Admin user already exists, skipping seeding");
+      const adminUser = existingAdmin[0];
+      if (adminUser) {
+        // Update existing admin user with admin role if not already set
+        if (adminUser.role !== "admin") {
+          await db
+            .update(user)
+            .set({ role: "admin" })
+            .where(eq(user.id, adminUser.id));
+          console.log("Updated existing admin user with admin role:", adminUser.email);
+        } else {
+          console.log("Admin user already exists with admin role, skipping seeding");
+        }
+      }
       return;
     }
 
@@ -78,6 +90,12 @@ export async function seedAdminUser() {
     });
 
     if (result.user) {
+      // Set admin role for the created user
+      await db
+        .update(user)
+        .set({ role: "admin" })
+        .where(eq(user.id, result.user.id));
+
       console.log("Admin user seeded successfully:", result.user.email);
     } else {
       console.error("Failed to seed admin user:", result);

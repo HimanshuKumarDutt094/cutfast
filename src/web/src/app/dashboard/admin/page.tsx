@@ -1,7 +1,6 @@
+import { auth } from "@/server/better-auth";
 import { headers } from "next/headers";
 import { notFound } from "next/navigation";
-import { env } from "@/env";
-import { auth } from "@/server/better-auth";
 import AdminPageClient from "./AdminPageClient";
 
 export default async function AdminPage() {
@@ -10,8 +9,13 @@ export default async function AdminPage() {
     headers: headersList,
   });
 
-  // Check if user is admin
-  if (!session?.user || session.user.email !== env.ADMIN_EMAIL) {
+  // Check if user is authenticated
+  if (!session?.user) {
+    notFound();
+  }
+
+  // Check if user has admin role
+  if (session.user.role !== "admin") {
     notFound();
   }
 
