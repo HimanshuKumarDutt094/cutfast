@@ -11,7 +11,6 @@ import { initTRPC, TRPCError } from "@trpc/server";
 import superjson from "superjson";
 import { ZodError } from "zod";
 
-import { env } from "@/env";
 import { auth } from "@/server/better-auth";
 import { db } from "@/server/db";
 
@@ -135,10 +134,10 @@ export const protectedProcedure = t.procedure
   });
 
 /**
- * Admin (authenticated + admin email) procedure
+ * Admin (authenticated + admin role) procedure
  *
  * If you want a query or mutation to ONLY be accessible to logged in admin users, use this.
- * It verifies the session is valid, user is logged in, and email matches ADMIN_EMAIL env var.
+ * It verifies the session is valid, user is logged in, and user has "admin" role.
  */
 export const adminProcedure = t.procedure
   .use(timingMiddleware)
@@ -147,9 +146,8 @@ export const adminProcedure = t.procedure
       throw new TRPCError({ code: "UNAUTHORIZED" });
     }
 
-    // Check if user's email matches admin email from environment
-    const adminEmail = env.ADMIN_EMAIL;
-    if (!adminEmail || ctx.session.user.email !== adminEmail) {
+    // Check if user has admin role
+    if (ctx.session.user.role !== "admin") {
       throw new TRPCError({
         code: "FORBIDDEN",
         message: "Admin access required",

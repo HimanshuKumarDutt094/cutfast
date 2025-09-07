@@ -8,6 +8,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Switch } from "@/components/ui/switch";
 import { authClient } from "@/server/better-auth/client";
 import { api } from "@/trpc/react";
+import type { UserWithRole } from "better-auth/plugins";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 
@@ -17,6 +18,8 @@ export default function AdminPageClient() {
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [isChangingPassword, setIsChangingPassword] = useState(false);
+  const [users, setUsers] = useState<UserWithRole[]>([]);
+  const [usersLoading, setUsersLoading] = useState(true);
 
   // tRPC hooks
   const {
@@ -24,8 +27,6 @@ export default function AdminPageClient() {
     refetch: refetchConfig,
     isLoading: configLoading,
   } = api.admin.getConfig.useQuery();
-  const { data: users, isLoading: usersLoading } =
-    api.admin.getUsers.useQuery();
   const { data: userCount, isLoading: userCountLoading } =
     api.admin.getUserCount.useQuery();
 
@@ -46,6 +47,30 @@ export default function AdminPageClient() {
       setMaxUsers(config.maxUsers);
     }
   }, [config]);
+
+  // Fetch users using admin plugin
+  useEffect(() => {
+    const fetchUsers = async () => {
+      try {
+        setUsersLoading(true);
+        const result = await authClient.admin.listUsers({
+          query: {
+            limit: 50, // Get up to 50 users
+          }
+        });
+        if (result.data) {
+          setUsers(result.data.users);
+        }
+      } catch (error) {
+        console.error("Failed to fetch users:", error);
+        toast.error("Failed to load users");
+      } finally {
+        setUsersLoading(false);
+      }
+    };
+
+    fetchUsers();
+  }, []);
 
   const handleUpdateMaxUsers = () => {
     if (maxUsers) {
