@@ -53,13 +53,10 @@ jobs:
         cp cutfast-chrome-extension.zip cutfast-chrome-extension-${VERSION}.zip
 
     - name: Create GitHub Release
-      id: create_release
-      uses: actions/create-release@v1
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      uses: softprops/action-gh-release@v2
       with:
         tag_name: ${{ github.event.inputs.version || github.ref_name }}
-        release_name: Release ${{ github.event.inputs.version || github.ref_name }}
+        name: Release ${{ github.event.inputs.version || github.ref_name }}
         body: |
           ## Extension Downloads
 
@@ -87,25 +84,11 @@ jobs:
           4. Enable "Developer mode" in the top right
           5. Click "Load unpacked" and select the unzipped folder
 
+          **Note:** These are development builds. For permanent installation, consider publishing to the official stores when possible.
+        files: |
+          ./src/extension/cutfast-firefox-extension-${{ github.event.inputs.version || github.ref_name }}.zip
+          ./src/extension/cutfast-chrome-extension-${{ github.event.inputs.version || github.ref_name }}.zip
         draft: false
         prerelease: false
-
-    - name: Upload Firefox extension
-      uses: actions/upload-release-asset@v1
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      with:
-        upload_url: ${{ steps.create_release.outputs.upload_url }}
-        asset_path: ./src/extension/cutfast-firefox-extension-${{ github.event.inputs.version || github.ref_name }}.zip
-        asset_name: cutfast-firefox-extension-${{ github.event.inputs.version || github.ref_name }}.zip
-        asset_content_type: application/zip
-
-    - name: Upload Chrome extension
-      uses: actions/upload-release-asset@v1
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      with:
-        upload_url: ${{ steps.create_release.outputs.upload_url }}
-        asset_path: ./src/extension/cutfast-chrome-extension-${{ github.event.inputs.version || github.ref_name }}.zip
-        asset_name: cutfast-chrome-extension-${{ github.event.inputs.version || github.ref_name }}.zip
-        asset_content_type: application/zip
