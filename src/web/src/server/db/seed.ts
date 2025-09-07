@@ -1,7 +1,7 @@
-import { env } from "@/env";
 import { eq } from "drizzle-orm";
-import { db } from ".";
+import { env } from "@/env";
 import { auth } from "../better-auth";
+import { db } from ".";
 import { config, user } from "./schema";
 
 /**
@@ -79,7 +79,6 @@ export async function seedAdminUser() {
 
     if (result.user) {
       console.log("Admin user seeded successfully:", result.user.email);
-
     } else {
       console.error("Failed to seed admin user:", result);
     }

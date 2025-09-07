@@ -1,3 +1,6 @@
+import { Hash, Settings, Tags } from "lucide-react";
+import { headers } from "next/headers";
+import Link from "next/link";
 import { UserMenu } from "@/components/auth/UserMenu";
 import {
   Sidebar,
@@ -15,9 +18,6 @@ import {
 } from "@/components/ui/sidebar";
 import { env } from "@/env";
 import { auth } from "@/server/better-auth";
-import { Hash, Settings, Tags } from "lucide-react";
-import { headers } from "next/headers";
-import Link from "next/link";
 
 const baseMenuItems = [
   {

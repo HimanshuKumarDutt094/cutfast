@@ -72,6 +72,4 @@ export const adminRouter = createTRPCRouter({
 
     return result.length;
   }),
-
-  
 });

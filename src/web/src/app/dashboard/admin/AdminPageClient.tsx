@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -8,7 +9,6 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Switch } from "@/components/ui/switch";
 import { authClient } from "@/server/better-auth/client";
 import { api } from "@/trpc/react";
-import { useEffect, useState } from "react";
 
 export default function AdminPageClient() {
   const [maxUsers, setMaxUsers] = useState("");
@@ -17,10 +17,15 @@ export default function AdminPageClient() {
   const [confirmPassword, setConfirmPassword] = useState("");
 
   // tRPC hooks
-  const { data: config, refetch: refetchConfig, isLoading: configLoading } =
-    api.admin.getConfig.useQuery();
-  const { data: users, isLoading: usersLoading } = api.admin.getUsers.useQuery();
-  const { data: userCount, isLoading: userCountLoading } = api.admin.getUserCount.useQuery();
+  const {
+    data: config,
+    refetch: refetchConfig,
+    isLoading: configLoading,
+  } = api.admin.getConfig.useQuery();
+  const { data: users, isLoading: usersLoading } =
+    api.admin.getUsers.useQuery();
+  const { data: userCount, isLoading: userCountLoading } =
+    api.admin.getUserCount.useQuery();
 
   const updateMaxUsersMutation = api.admin.updateMaxUsers.useMutation({
     onSuccess: () => {
