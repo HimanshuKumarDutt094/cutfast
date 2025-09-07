@@ -14,12 +14,29 @@ Key components:
 
 ## Features
 
+### Core Features
 - **Instant Text Expansion**: Trigger shortcuts with patterns like `/msg-2` for immediate replacement
 - **Offline Capability**: Local database ensures functionality without internet connection
 - **Cross-Platform**: Works across all websites and apps that support text input
 - **Secure Sync**: Background synchronization with row-level security
 - **User Management**: Categories and shortcuts with per-user scoping
 - **Modern UI**: Clean, responsive dashboard built with Next.js and React
+
+### Advanced Features
+- **Admin Dashboard**: Complete administrative control with user management, signup limits, and system configuration
+- **Signup Control**: Enable/disable user registration and set maximum user limits
+- **Self-Hosting Support**: Custom API endpoint configuration for self-deployed instances
+- **Data Portability**: Full import/export functionality for shortcuts with JSON format
+- **One-Click Build**: Automated build script for Firefox and Chrome extensions
+- **Automated Deployment**: GitHub Actions workflow for extension releases
+- **Database Automation**: Docker-based PostgreSQL setup for development and production
+
+### Security & Access Control
+- **Role-Based Access**: Admin users with elevated permissions
+- **Login Prevention**: Configurable signup restrictions
+- **User Limits**: Enforceable maximum user count
+- **Row-Level Security**: Database-level access control
+- **JWT Authentication**: Secure token-based authentication for extensions
 
 ## Architecture
 
@@ -47,10 +64,10 @@ The system is organized into four logical planes:
 
 - Node.js (latest LTS)
 - pnpm package manager
-- PostgreSQL database
+- PostgreSQL database (or Docker for automated setup)
 - Git
 
-### Installation
+### Quick Start
 
 1. **Clone the repository**
    ```bash
@@ -64,19 +81,20 @@ The system is organized into four logical planes:
    ```
 
 3. **Set up environment variables**
-   - Copy `.env.example` to `.env` in both `src/web-new` and `src/extension`
+   - Copy `src/web/.env.example` to `src/web/.env`
+   - Copy `src/extension/.env.example` to `src/extension/.env`
    - Configure database connection and authentication settings
 
-4. **Set up the database**
+4. **Set up the database (Automated)**
    ```bash
-   cd src/web-new
+   cd src/web
    ./start-database.sh
    ```
 
 5. **Run the development servers**
    ```bash
-   # Web dashboard
-   cd src/web-new
+   # Web dashboard (in one terminal)
+   cd src/web
    pnpm dev
 
    # Extension (in another terminal)
@@ -84,11 +102,39 @@ The system is organized into four logical planes:
    pnpm dev
    ```
 
-6. **Build the extension**
+6. **Build the extension (One-Click)**
    ```bash
    cd src/extension
-   pnpm build
+   ./build.sh all
    ```
+
+### Admin Setup
+
+After installation, create your first admin user:
+
+1. Visit the web dashboard at `http://localhost:3000`
+2. Sign up for an account
+3. Access the admin panel at `/dashboard/admin`
+4. Configure system settings like user limits and signup controls
+
+### Self-Hosting
+
+For production deployment:
+
+1. **Database**: Use PostgreSQL (managed or self-hosted)
+2. **Web App**: Deploy to Vercel, Netlify, or any Node.js hosting
+3. **Extensions**: Use the automated build script and GitHub releases
+4. **Custom Endpoints**: Configure extension to use your custom API URL
+
+### Extension Installation
+
+**Development:**
+- Firefox: Load `src/extension/dist-firefox` as temporary add-on
+- Chrome: Load `src/extension/dist-chrome` as unpacked extension
+
+**Production:**
+- Download pre-built extensions from GitHub releases
+- Follow browser-specific installation instructions
 
 ## Project Structure
 
@@ -109,20 +155,95 @@ cutfast/
 └── README.md            # This file
 ```
 
+## Admin Features
+
+CutFast includes a comprehensive admin dashboard for system management:
+
+### User Management
+- **User Overview**: View all registered users with email verification status
+- **User Limits**: Set maximum number of users allowed on the platform
+- **Signup Control**: Enable/disable new user registration
+- **Admin Access**: Role-based access control for administrative functions
+
+### System Configuration
+- **Database Management**: Automated PostgreSQL setup with Docker
+- **Environment Setup**: Streamlined configuration for development and production
+- **Build Automation**: One-click build scripts for extensions
+
+### Security Features
+- **Access Control**: Admin-only access to sensitive system settings
+- **Audit Trail**: User registration and activity monitoring
+- **Data Export**: Administrative data export capabilities
+
+## Self-Hosting & Deployment
+
+### Database Setup
+CutFast includes automated database setup:
+
+```bash
+# Automated PostgreSQL setup with Docker
+cd src/web
+./start-database.sh
+```
+
+This script:
+- Checks for Docker/Podman availability
+- Creates a PostgreSQL container with proper configuration
+- Generates secure random passwords
+- Handles port conflicts and existing containers
+
+### Custom API Endpoints
+For self-hosted deployments, configure custom API URLs:
+
+1. **Extension Configuration**: Set custom API endpoint in extension settings
+2. **Environment Variables**: Configure `VITE_PUBLIC_API_URL` for custom deployments
+3. **CORS Setup**: Ensure proper cross-origin resource sharing configuration
+
+### Build & Release Automation
+One-click build system for extensions:
+
+```bash
+# Build both Firefox and Chrome extensions
+cd src/extension
+./build.sh all
+
+# Build specific browser
+./build.sh firefox
+./build.sh chrome
+```
+
+### GitHub Actions Deployment
+Automated release workflow:
+- Triggered by git tags (e.g., `v1.0.0`)
+- Builds extensions for both browsers
+- Creates GitHub releases with installation instructions
+- Generates browser-specific download links
+
 ## API Endpoints
 
 The backend provides RESTful API endpoints for shortcuts and categories:
 
+### Shortcuts
 - `GET/POST /api/shortcuts` - List and create shortcuts
 - `GET/PUT/DELETE /api/shortcuts/{id}` - Manage individual shortcuts
+- `GET /api/shortcuts/export` - Export shortcuts to JSON
+- `POST /api/shortcuts/import` - Import shortcuts from JSON
+
+### Categories
 - `GET/POST /api/categories` - List and create categories
 - `PUT/DELETE /api/categories/{id}` - Manage individual categories
 
+### Admin
+- `GET/POST /api/admin/config` - Get/update system configuration
+- `GET /api/admin/users` - List all users (admin only)
+- `POST /api/admin/signup-toggle` - Enable/disable user registration
+
 ## Authentication
 
-- **Web Dashboard**: Cookie-based sessions
-- **Extension**: JWT tokens with refresh mechanism
+- **Web Dashboard**: Cookie-based sessions with better-auth
+- **Extension**: JWT tokens with automatic refresh mechanism
 - **Security**: Row-level security enforced through authorizing proxy
+- **Admin Access**: Role-based permissions for system administration
 
 ## Contributing
 
@@ -142,7 +263,3 @@ This project is open source. See LICENSE file for details.
 - **LinkedIn**: [linkedin.com/in/himanshu-dutt-77](https://linkedin.com/in/himanshu-dutt-77)
 - **Portfolio**: [v0-himanshu-portfolio-peach.vercel.app](https://v0-himanshu-portfolio-peach.vercel.app/)
 - **Email**: adasimobenio@gmail.com
-
-## Acknowledgments
-
-Built with modern web technologies to provide a seamless productivity experience.

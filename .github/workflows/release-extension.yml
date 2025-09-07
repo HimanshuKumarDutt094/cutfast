@@ -31,6 +31,7 @@ jobs:
       run: npm install -g pnpm@10
 
     - name: Install dependencies
+      working-directory: src/extension
       run: pnpm install --frozen-lockfile
 
     - name: Set release version
@@ -67,7 +68,24 @@ jobs:
           - [Download Chrome Extension](https://github.com/${{ github.repository }}/releases/download/${{ env.VERSION }}/cutfast-chrome-${{ env.VERSION }}.zip)
 
           ## Installation Instructions
-          (same as before…)
+
+          ### Firefox Installation
+          1. Download the Firefox extension zip file from the link above
+          2. Extract the zip file to a folder on your computer
+          3. Open Firefox and navigate to `about:addons`
+          4. Click the gear icon (⚙️) in the top-right corner
+          5. Select "Install Add-on From File..."
+          6. Navigate to the extracted folder and select the `manifest.json` file
+          7. Click "Open" to install the extension
+
+          ### Chrome Installation
+          1. Download the Chrome extension zip file from the link above
+          2. Extract the zip file to a folder on your computer
+          3. Open Chrome and navigate to `chrome://extensions/`
+          4. Enable "Developer mode" in the top-right corner
+          5. Click "Load unpacked" button
+          6. Select the extracted folder containing the extension files
+          7. The extension will be installed and appear in your extensions list
 
         files: |
           src/extension/cutfast-firefox-${{ env.VERSION }}.zip
