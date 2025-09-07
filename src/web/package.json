@@ -6,7 +6,7 @@
   "author": "Himanshu Kumar Dutt",
   "license": "MIT",
   "scripts": {
-    "build": "npm run with-env -- npm run  db:migrate && npm run db:seed && next build",
+    "build": "dotenv -e .env -- drizzle-kit migrate && dotenv -e .env -- tsx src/server/db/seed.ts && dotenv -e .env -- next build",
     "check": "biome check .",
     "check:unsafe": "biome check --write --unsafe .",
     "check:write": "biome check --write .",
