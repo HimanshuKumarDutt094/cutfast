@@ -1,8 +1,8 @@
-import type { TRPCRouterRecord } from "@trpc/server";
-import { and, eq, gt } from "drizzle-orm";
-import { z } from "zod";
 import { shortcuts } from "@/server/db/schema";
 import { shortcutSchema } from "@/zod/shortcuts";
+import { TRPCError, type TRPCRouterRecord } from "@trpc/server";
+import { and, eq, gt } from "drizzle-orm";
+import { z } from "zod";
 import { protectedProcedure } from "../trpc";
 
 export const shortcutsRouter = {
@@ -158,5 +158,78 @@ export const shortcutsRouter = {
         .returning();
       if (deleted.length === 0) throw new Error("Shortcut not found");
       return { success: true };
+    }),
+  export: protectedProcedure.query(async ({ ctx }) => {
+    const userShortcuts = await ctx.db
+      .select({
+        id: shortcuts.id,
+        shortcutKey: shortcuts.shortcutKey,
+        content: shortcuts.content,
+        categoryId: shortcuts.categoryId,
+        createdAt: shortcuts.createdAt,
+        updatedAt: shortcuts.updatedAt,
+        lastModifiedAt: shortcuts.lastModifiedAt,
+      })
+      .from(shortcuts)
+      .where(eq(shortcuts.userId, ctx.session.user.id));
+
+    return {
+      shortcuts: userShortcuts,
+      exportedAt: new Date().toISOString(),
+      version: "1.0",
+    };
+  }),
+
+  import: protectedProcedure
+    .input(
+      z.object({
+        shortcuts: z.array(
+          z.object({
+            shortcutKey: z.string(),
+            content: z.string(),
+            categoryId: z.string().uuid().optional().nullable(),
+          })
+        ),
+        version: z.string().optional(),
+      })
+    )
+    .mutation(async ({ input, ctx }) => {
+      if (!input.shortcuts || input.shortcuts.length === 0) {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: "No shortcuts to import",
+        });
+      }
+
+      // Validate all shortcuts before importing
+      const validatedShortcuts = input.shortcuts.map((shortcut) => {
+        const result = shortcutSchema.safeParse(shortcut);
+        if (!result.success) {
+          throw new TRPCError({
+            code: "BAD_REQUEST",
+            message: `Invalid shortcut data: ${result.error.message}`,
+          });
+        }
+        return result.data;
+      });
+
+      // Insert all shortcuts in a transaction
+      const insertedShortcuts = await ctx.db
+        .insert(shortcuts)
+        .values(
+          validatedShortcuts.map((shortcut) => ({
+            userId: ctx.session.user.id,
+            shortcutKey: shortcut.shortcutKey,
+            content: shortcut.content,
+            categoryId: shortcut.categoryId ?? null,
+          }))
+        )
+        .returning();
+
+      return {
+        success: true,
+        importedCount: insertedShortcuts.length,
+        message: `Successfully imported ${insertedShortcuts.length} shortcuts`,
+      };
     }),
 } satisfies TRPCRouterRecord;

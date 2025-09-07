@@ -93,7 +93,7 @@ export default function RootLayout({
     <html lang="en" className={`${geist.variable}`}>
       <body>
         <NuqsAdapter>
-          <Toaster/>
+          <Toaster />
           <TRPCReactProvider>{children}</TRPCReactProvider>
         </NuqsAdapter>
       </body>

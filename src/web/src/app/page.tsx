@@ -1,6 +1,6 @@
-import { Database, Shield, Smartphone, Zap } from "lucide-react";
 import { LoginForm } from "@/components/auth/LoginForm";
 import { SignupForm } from "@/components/auth/SignupForm";
+import { ExtensionDownload } from "@/components/ExtensionDownload";
 import { Badge } from "@/components/ui/badge";
 import {
   Card,
@@ -11,6 +11,7 @@ import {
 } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { api } from "@/trpc/server";
+import { Database, Shield, Smartphone, Zap } from "lucide-react";
 
 export default async function Home() {
   const signUpStatus = await api.admin.getConfig();
@@ -47,6 +48,9 @@ export default async function Home() {
           </div>
         </div>
       </div>
+
+      {/* Extension Download Section */}
+      <ExtensionDownload />
 
       {/* Features Grid */}
       <div className="mx-auto max-w-7xl px-4 py-16 sm:px-6 lg:px-8">

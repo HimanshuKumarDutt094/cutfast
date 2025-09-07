@@ -67,7 +67,7 @@ export const auth = betterAuth({
     //   redirectURI: "http://localhost:3000/api/auth/callback/github",
     // },
   },
-  plugins: [jwt(), bearer(), userLimitPlugin(),admin()],
+  plugins: [jwt(), bearer(), userLimitPlugin(), admin()],
   baseURL: process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:3000",
   trustedOrigins: ["*"],
 });

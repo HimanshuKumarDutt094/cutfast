@@ -1,7 +1,7 @@
-import { env } from "@/env";
 import { eq } from "drizzle-orm";
-import { db } from ".";
+import { env } from "@/env";
 import { auth } from "../better-auth";
+import { db } from ".";
 import { config, user } from "./schema";
 
 /**
@@ -70,9 +70,14 @@ export async function seedAdminUser() {
             .update(user)
             .set({ role: "admin" })
             .where(eq(user.id, adminUser.id));
-          console.log("Updated existing admin user with admin role:", adminUser.email);
+          console.log(
+            "Updated existing admin user with admin role:",
+            adminUser.email,
+          );
         } else {
-          console.log("Admin user already exists with admin role, skipping seeding");
+          console.log(
+            "Admin user already exists with admin role, skipping seeding",
+          );
         }
       }
       return;

@@ -1,6 +1,6 @@
-import { auth } from "@/server/better-auth";
 import { headers } from "next/headers";
 import { notFound } from "next/navigation";
+import { auth } from "@/server/better-auth";
 import AdminPageClient from "./AdminPageClient";
 
 export default async function AdminPage() {

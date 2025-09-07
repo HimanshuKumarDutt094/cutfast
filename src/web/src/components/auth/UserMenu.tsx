@@ -1,6 +1,6 @@
 "use client";
 
-import { LogOut, User } from "lucide-react";
+import { Download, LogOut, User } from "lucide-react";
 import { useRouter } from "next/navigation";
 
 import { Button } from "@/components/ui/button";
@@ -13,6 +13,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { authClient } from "@/server/better-auth/client";
+import { ImportExportDialog } from "./ImportExportDialog";
 
 export function UserMenu() {
   const router = useRouter();
@@ -33,6 +34,7 @@ export function UserMenu() {
         <Button variant="ghost" className="relative h-8 w-8 rounded-full">
           <User className="h-4 w-4" />
         </Button>
+        
       </DropdownMenuTrigger>
       <DropdownMenuContent className="w-56" align="end" forceMount>
         <DropdownMenuLabel className="font-normal">
@@ -42,7 +44,15 @@ export function UserMenu() {
               Manage your shortcuts
             </p>
           </div>
+          
         </DropdownMenuLabel>
+        <DropdownMenuSeparator />
+        <ImportExportDialog>
+          <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
+            <Download className="mr-2 h-4 w-4" />
+            <span>Import/Export</span>
+          </DropdownMenuItem>
+        </ImportExportDialog>
         <DropdownMenuSeparator />
         <DropdownMenuItem onClick={handleSignOut}>
           <LogOut className="mr-2 h-4 w-4" />

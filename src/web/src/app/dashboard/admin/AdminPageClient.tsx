@@ -1,5 +1,8 @@
 "use client";
 
+import type { UserWithRole } from "better-auth/plugins";
+import { useEffect, useState } from "react";
+import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -8,9 +11,6 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Switch } from "@/components/ui/switch";
 import { authClient } from "@/server/better-auth/client";
 import { api } from "@/trpc/react";
-import type { UserWithRole } from "better-auth/plugins";
-import { useEffect, useState } from "react";
-import { toast } from "sonner";
 
 export default function AdminPageClient() {
   const [maxUsers, setMaxUsers] = useState("");
@@ -56,7 +56,7 @@ export default function AdminPageClient() {
         const result = await authClient.admin.listUsers({
           query: {
             limit: 50, // Get up to 50 users
-          }
+          },
         });
         if (result.data) {
           setUsers(result.data.users);
@@ -223,7 +223,12 @@ export default function AdminPageClient() {
                     setIsChangingPassword(false);
                   }
                 }}
-                disabled={!currentPassword || !newPassword || !confirmPassword || isChangingPassword}
+                disabled={
+                  !currentPassword ||
+                  !newPassword ||
+                  !confirmPassword ||
+                  isChangingPassword
+                }
               >
                 {isChangingPassword ? "Changing..." : "Change Password"}
               </Button>

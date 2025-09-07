@@ -1,18 +1,39 @@
 import { neon } from "@neondatabase/serverless";
-import { drizzle } from "drizzle-orm/neon-http";
+import { drizzle as neonDrizzle } from "drizzle-orm/neon-http";
+import { drizzle as normalDrizzle } from "drizzle-orm/postgres-js";
+
 import { env } from "@/env";
+import postgres from "postgres";
 import * as schema from "./schema";
+
+const isProduction = env.NODE_ENV === "production";
 
 /**
  * Cache the database connection in development. This avoids creating a new connection on every HMR
  * update.
  */
-const sql = neon(env.DATABASE_URL);
-const globalForDb = globalThis as unknown as {
-  conn: typeof sql | undefined;
+const globalForNeonDb = globalThis as unknown as {
+  conn: ReturnType<typeof neon> | undefined;
 };
 
-const conn = globalForDb.conn ?? sql;
-if (env.NODE_ENV !== "production") globalForDb.conn = conn;
+const globalForNormalDb = globalThis as unknown as {
+  conn: ReturnType<typeof postgres> | undefined;
+};
 
-export const db = drizzle({ client: sql, schema });
+let db: ReturnType<typeof neonDrizzle> | ReturnType<typeof normalDrizzle>;
+
+if (isProduction) {
+  // Use Neon for production
+  const neonClient = globalForNeonDb.conn ?? neon(env.DATABASE_URL);
+  if (env.NODE_ENV !== "production") globalForNeonDb.conn = neonClient;
+
+  db = neonDrizzle({ client: neonClient, schema });
+} else {
+  // Use regular PostgreSQL for development and other environments
+  const postgresClient = globalForNormalDb.conn ?? postgres(env.DATABASE_URL);
+  if (env.NODE_ENV !== "production") globalForNormalDb.conn = postgresClient;
+
+  db = normalDrizzle(postgresClient, { schema });
+}
+
+export { db };
