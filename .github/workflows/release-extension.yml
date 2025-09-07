@@ -27,10 +27,12 @@ jobs:
       uses: actions/setup-node@v4
       with:
         node-version: '22'
-        cache: 'npm'
+
+    - name: Setup pnpm
+      run: npm install -g pnpm@10
 
     - name: Install dependencies
-      run: npm ci
+      run: pnpm install --frozen-lockfile
 
     - name: Build Firefox extension
       run: |
