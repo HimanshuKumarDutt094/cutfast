@@ -1,6 +1,3 @@
-import { Hash, Settings, Tags } from "lucide-react";
-import { headers } from "next/headers";
-import Link from "next/link";
 import { UserMenu } from "@/components/auth/UserMenu";
 import {
   Sidebar,
@@ -16,8 +13,10 @@ import {
   SidebarProvider,
   SidebarTrigger,
 } from "@/components/ui/sidebar";
-import { env } from "@/env";
 import { auth } from "@/server/better-auth";
+import { Hash, Settings, Tags } from "lucide-react";
+import { headers } from "next/headers";
+import Link from "next/link";
 
 const baseMenuItems = [
   {
@@ -44,7 +43,7 @@ export default async function DashboardLayout({
     headers: headersList,
   });
 
-  const isAdmin = session?.user?.email === env.ADMIN_EMAIL;
+  const isAdmin = session?.user?.role === "admin";
 
   const menuItems = isAdmin
     ? [
