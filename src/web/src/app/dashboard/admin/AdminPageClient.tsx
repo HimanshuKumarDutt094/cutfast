@@ -1,6 +1,5 @@
 "use client";
 
-import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -9,12 +8,15 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Switch } from "@/components/ui/switch";
 import { authClient } from "@/server/better-auth/client";
 import { api } from "@/trpc/react";
+import { useEffect, useState } from "react";
+import { toast } from "sonner";
 
 export default function AdminPageClient() {
   const [maxUsers, setMaxUsers] = useState("");
   const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
+  const [isChangingPassword, setIsChangingPassword] = useState(false);
 
   // tRPC hooks
   const {
@@ -38,7 +40,6 @@ export default function AdminPageClient() {
       refetchConfig();
     },
   });
-
   // Initialize form with current config
   useEffect(() => {
     if (config?.maxUsers) {
@@ -171,10 +172,11 @@ export default function AdminPageClient() {
               <Button
                 onClick={async () => {
                   if (newPassword !== confirmPassword) {
-                    alert("Passwords don't match");
+                    toast.error("Passwords don't match");
                     return;
                   }
 
+                  setIsChangingPassword(true);
                   try {
                     const result = await authClient.changePassword({
                       newPassword,
@@ -183,20 +185,22 @@ export default function AdminPageClient() {
                     });
 
                     if (result.data) {
-                      alert("Password changed successfully!");
+                      toast.success("Password changed successfully!");
                       setCurrentPassword("");
                       setNewPassword("");
                       setConfirmPassword("");
                     } else {
-                      alert("Failed to change password");
+                      toast.error("Failed to change password");
                     }
                   } catch (error) {
-                    alert("Error changing password");
+                    toast.error("Error changing password");
+                  } finally {
+                    setIsChangingPassword(false);
                   }
                 }}
-                disabled={!currentPassword || !newPassword || !confirmPassword}
+                disabled={!currentPassword || !newPassword || !confirmPassword || isChangingPassword}
               >
-                Change Password
+                {isChangingPassword ? "Changing..." : "Change Password"}
               </Button>
             </div>
           </CardContent>
