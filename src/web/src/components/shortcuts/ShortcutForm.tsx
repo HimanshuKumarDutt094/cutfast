@@ -1,11 +1,5 @@
 "use client";
 
-import { zodResolver } from "@hookform/resolvers/zod";
-import { Loader2, Plus } from "lucide-react";
-import { useRouter } from "next/navigation";
-import { parseAsString, useQueryState } from "nuqs";
-import { useEffect } from "react";
-import { useForm } from "react-hook-form";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -34,6 +28,12 @@ import {
 import { Textarea } from "@/components/ui/textarea";
 import { api } from "@/trpc/react";
 import { type ShortcutFormData, shortcutSchema } from "@/zod/shortcuts";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { Loader2, Plus } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { parseAsString, useQueryState } from "nuqs";
+import { useEffect } from "react";
+import { useForm } from "react-hook-form";
 
 export function ShortcutForm() {
   const router = useRouter();
@@ -135,7 +135,7 @@ export function ShortcutForm() {
           <Loader2 className="animate-spin" />
         </div>
       ) : (
-        <DialogContent className="sm:max-w-[600px]">
+        <DialogContent className="sm:max-w-[600px] h-full max-h-[80vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>
               {isEditing ? "Edit Shortcut" : "Create New Shortcut"}
@@ -215,7 +215,7 @@ export function ShortcutForm() {
                     <FormControl>
                       <Textarea
                         placeholder="Enter the text that will replace the shortcut..."
-                        className="min-h-[100px]"
+                        className="min-h-[180px] max-h-[190px] overflow-scroll resize-none"
                         disabled={
                           isLoading ||
                           createMutation.isPending ||
