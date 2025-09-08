@@ -118,3 +118,24 @@
 		@apply bg-background text-foreground;
 	}
 }
+
+/* Hide scrollbars across all browsers */
+body {
+	scrollbar-width: none; /* Firefox */
+	-ms-overflow-style: none; /* IE and Edge */
+}
+
+/* WebKit browsers (Chrome, Safari, Edge) */
+body::-webkit-scrollbar {
+	display: none;
+}
+
+/* Hide scrollbars for all elements in the extension */
+* {
+	scrollbar-width: none; /* Firefox */
+	-ms-overflow-style: none; /* IE and Edge */
+}
+
+*::-webkit-scrollbar {
+	display: none; /* WebKit browsers */
+}

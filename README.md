@@ -58,6 +58,16 @@ The system is organized into four logical planes:
 - **Styling**: Tailwind CSS, shadcn/ui components
 - **Build Tools**: pnpm, Vite
 
+## Extension Availability
+
+CutFast is available for multiple browsers:
+
+- **Microsoft Edge**: [Official Add-ons Store](https://microsoftedge.microsoft.com/addons/detail/cutfast-text-shortcuts/iijjcflafgeppdafiighhcpobahkcpdl) - Fully approved and available
+- **Firefox**: Download from [GitHub Releases](https://github.com/HimanshuKumarDutt094/cutfast/releases)
+- **Chrome**: Download from [GitHub Releases](https://github.com/HimanshuKumarDutt094/cutfast/releases)
+
+For Microsoft Edge users, simply visit the link above and click "Get" to install. For other browsers, follow the installation instructions in the releases.
+
 ## Getting Started
 
 ### Prerequisites

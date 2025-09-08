@@ -389,6 +389,24 @@ function Popup() {
 
 					{/* Only show login form when not configuring API */}
 					{!showApiConfig && <LoginForm onSuccess={handleLoginSuccess} />}
+
+					{/* Register link */}
+					{!showApiConfig && (
+						<div className="text-center">
+							<Button
+								variant="link"
+								className="text-xs text-blue-600 hover:text-blue-800"
+								onClick={() => {
+									browser.tabs.create({
+										url: "https://cutfast-extension.vercel.app/",
+									});
+									window.close();
+								}}
+							>
+								Don't have an account? Register here
+							</Button>
+						</div>
+					)}
 				</div>
 			)}
 

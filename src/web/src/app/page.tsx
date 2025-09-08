@@ -20,7 +20,7 @@ export default async function Home() {
       {/* Hero Section */}
       <div className="relative overflow-hidden">
         <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-secondary/5" />
-        <div className="relative mx-auto max-w-7xl px-4 py-24 sm:px-6 lg:px-8">
+        <div className="relative mx-auto max-w-7xl px-4 py-10 sm:px-6 lg:px-8">
           <div className="text-center flex flex-col justify-center">
             <Badge variant="secondary" className="mb-4">
               <Zap className="mr-1 h-3 w-3" />
@@ -33,6 +33,10 @@ export default async function Home() {
               Instantaneous, offline-capable text expansion platform. Transform
               how you write with intelligent shortcuts that work everywhere.
             </p>
+<p className="text-lg lg:text-xl">
+            Want to self host your own backend and dashboard ? We have one click deploy to vercel.
+
+</p>
             <a
               className="mx-auto max-w-2xl"
               href="https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2FHimanshuKumarDutt094%2Fcutfast%2Ftree%2Fmain%2Fsrc%2Fweb

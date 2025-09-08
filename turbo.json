@@ -11,7 +11,7 @@
       "passThroughEnv": ["DATABASE_URL", "BETTER_AUTH_SECRET"]
     },
 
-    "extension#build": {
+    "extension#build:all": {
       "env": ["VITE_PUBLIC_API_URL"],
       "passThroughEnv": ["VITE_PUBLIC_API_URL"]
     },

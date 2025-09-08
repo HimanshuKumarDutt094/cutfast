@@ -54,7 +54,7 @@ export function ExtensionDownload() {
   };
 
   return (
-    <div className="mx-auto max-w-7xl px-4 py-16 sm:px-6 lg:px-8">
+    <div className="mx-auto max-w-7xl px-4 py-5 sm:px-6 lg:px-8">
       <div className="text-center mb-12">
         <h2 className="text-3xl font-bold text-foreground mb-4">
           Get the Browser Extension
@@ -65,7 +65,7 @@ export function ExtensionDownload() {
         </p>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-4xl mx-auto">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-6xl mx-auto">
         {/* Firefox Card */}
         <Card className="relative overflow-hidden">
           <CardHeader className="text-center">
@@ -74,7 +74,7 @@ export function ExtensionDownload() {
             </div>
             <CardTitle className="text-xl">Firefox Extension</CardTitle>
             <CardDescription>
-              For Firefox, Thunderbird, and other Mozilla browsers
+              For Firefox, and other Mozilla browsers
             </CardDescription>
           </CardHeader>
           <CardContent className="text-center space-y-4">
@@ -108,7 +108,7 @@ export function ExtensionDownload() {
             </div>
             <CardTitle className="text-xl">Chrome Extension</CardTitle>
             <CardDescription>
-              For Chrome, Edge, and other Chromium browsers
+              For Chrome and other Chromium browsers
             </CardDescription>
           </CardHeader>
           <CardContent className="text-center space-y-4">
@@ -130,6 +130,38 @@ export function ExtensionDownload() {
                 <li>Open Chrome and go to <code className="bg-muted px-1 py-0.5 rounded text-xs">chrome://extensions/</code></li>
                 <li>Enable "Developer mode" (top right)</li>
                 <li>Click "Load unpacked" and select the unzipped folder</li>
+              </ol>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Microsoft Edge Card */}
+        <Card className="relative overflow-hidden">
+          <CardHeader className="text-center">
+            <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-lg bg-blue-100 dark:bg-blue-900/20">
+              <span className="text-2xl font-bold text-blue-600 dark:text-blue-400">🌐</span>
+            </div>
+            <CardTitle className="text-xl">Microsoft Edge</CardTitle>
+            <CardDescription>
+              Official Microsoft Edge Add-ons Store
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="text-center space-y-4">
+            <Button
+              onClick={() => window.open("https://microsoftedge.microsoft.com/addons/detail/cutfast-text-shortcuts/iijjcflafgeppdafiighhcpobahkcpdl", "_blank")}
+              className="w-full bg-blue-600 hover:bg-blue-700 text-white"
+              size="lg"
+            >
+              <ExternalLink className="mr-2 h-4 w-4" />
+              Get from Microsoft Edge Add-ons
+            </Button>
+
+            <div className="text-sm text-muted-foreground space-y-2">
+              <p className="font-medium">Installation:</p>
+              <ol className="text-left list-decimal list-inside space-y-1">
+                <li>Click the button above to visit the Edge Add-ons Store</li>
+                <li>Click "Get" to install the extension</li>
+                <li>The extension will be added to your browser automatically</li>
               </ol>
             </div>
           </CardContent>
