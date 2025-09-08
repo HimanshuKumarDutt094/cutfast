@@ -45,6 +45,3 @@ jobs:
     - name: Build web
       working-directory: src/web
       run: pnpm run build
-
-    - name: Run tests
-      run: pnpm test

@@ -44,7 +44,6 @@ jobs:
           ${{ runner.os }}-pnpm-store-
 
     - name: Install dependencies
-      working-directory: src/extension
       run: pnpm install --frozen-lockfile
 
     - name: Set release version
