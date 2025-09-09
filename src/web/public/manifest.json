@@ -45,8 +45,32 @@
   "dir": "ltr",
   "screenshots": [
     {
-      "src": "/cutfast.png",
+      "src": "/home-landing.jpeg",
       "sizes": "1280x720",
+      "type": "image/jpeg",
+      "form_factor": "wide"
+    },
+    {
+      "src": "/dashboard-page.jpeg",
+      "sizes": "1280x720",
+      "type": "image/jpeg",
+      "form_factor": "wide"
+    },
+    {
+      "src": "/create-a-shortcut.png",
+      "sizes": "1280x720",
+      "type": "image/png",
+      "form_factor": "wide"
+    },
+    {
+      "src": "/import-export-shortcuts.jpeg",
+      "sizes": "1280x720",
+      "type": "image/jpeg",
+      "form_factor": "wide"
+    },
+    {
+      "src": "/cutfast.png",
+      "sizes": "512x512",
       "type": "image/png",
       "form_factor": "wide"
     }

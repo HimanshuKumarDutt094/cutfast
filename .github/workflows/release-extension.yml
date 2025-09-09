@@ -30,20 +30,16 @@ jobs:
     - name: Setup pnpm
       run: npm install -g pnpm@10
 
-    - name: Get pnpm store directory
-      shell: bash
-      run: |
-        echo "STORE_PATH=$(pnpm config get store-dir)" >> $GITHUB_ENV
-
     - name: Setup pnpm cache
       uses: actions/cache@v4
       with:
-        path: ${{ env.STORE_PATH }}
+        path: ~/.local/share/pnpm/store/v3
         key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
         restore-keys: |
           ${{ runner.os }}-pnpm-store-
 
     - name: Install dependencies
+      working-directory: src/extension
       run: pnpm install --frozen-lockfile
 
     - name: Set release version

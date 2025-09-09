@@ -8,7 +8,7 @@ import { Toaster } from "sonner";
 import { TRPCReactProvider } from "@/trpc/react";
 
 export const metadata: Metadata = {
-  metadataBase: new URL("https://cutfast.app"),
+  metadataBase: new URL("https://cutfast-extension.vercel.app"),
   title: "CutFast - Smart Text Shortcuts",
   description:
     "Boost your productivity with intelligent text shortcuts. Create, manage, and use custom shortcuts across all your favorite apps and websites.",
@@ -44,14 +44,26 @@ export const metadata: Metadata = {
     title: "CutFast - Smart Text Shortcuts",
     description:
       "Boost your productivity with intelligent text shortcuts. Create, manage, and use custom shortcuts across all your favorite apps and websites.",
-    url: "https://cutfast.app",
+    url: "https://cutfast-extension.vercel.app",
     siteName: "CutFast",
     images: [
       {
-        url: "/cutfast.png",
+        url: "/home-landing.jpeg",
         width: 1200,
         height: 630,
-        alt: "CutFast - Smart Text Shortcuts",
+        alt: "CutFast Home Landing Page - Smart Text Shortcuts",
+      },
+      {
+        url: "/dashboard-page.jpeg",
+        width: 1200,
+        height: 630,
+        alt: "CutFast Dashboard - Manage Your Shortcuts",
+      },
+      {
+        url: "/cutfast.png",
+        width: 512,
+        height: 512,
+        alt: "CutFast Logo",
       },
     ],
     locale: "en_US",
@@ -62,7 +74,7 @@ export const metadata: Metadata = {
     title: "CutFast - Smart Text Shortcuts",
     description:
       "Boost your productivity with intelligent text shortcuts. Create, manage, and use custom shortcuts across all your favorite apps and websites.",
-    images: ["/cutfast.png"],
+    images: ["/home-landing.jpeg", "/dashboard-page.jpeg", "/cutfast.png"],
     creator: "@cutfast",
   },
   robots: {
@@ -86,11 +98,48 @@ const geist = Geist({
   variable: "--font-geist-sans",
 });
 
+// JSON-LD structured data for SEO
+const jsonLd = {
+  '@context': 'https://schema.org',
+  '@type': 'SoftwareApplication',
+  name: 'CutFast - Smart Text Shortcuts',
+  description: 'Boost your productivity with intelligent text shortcuts. Create, manage, and use custom shortcuts across all your favorite apps and websites.',
+  applicationCategory: 'ProductivityApplication',
+  operatingSystem: 'Web Browser',
+  offers: {
+    '@type': 'Offer',
+    price: '0',
+    priceCurrency: 'USD',
+  },
+  author: {
+    '@type': 'Person',
+    name: 'Himanshu Kumar Dutt',
+  },
+  screenshot: [
+    'https://cutfast-extension.vercel.app/home-landing.jpeg',
+    'https://cutfast-extension.vercel.app/dashboard-page.jpeg',
+    'https://cutfast-extension.vercel.app/create-a-shortcut.png',
+  ],
+  aggregateRating: {
+    '@type': 'AggregateRating',
+    ratingValue: '5',
+    ratingCount: '1',
+  },
+};
+
 export default function RootLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
   return (
     <html lang="en" className={`${geist.variable}`}>
+      <head>
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify(jsonLd).replace(/</g, '\\u003c'),
+          }}
+        />
+      </head>
       <body>
         <NuqsAdapter>
           <Toaster />
