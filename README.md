@@ -1,23 +1,25 @@
 # CutFast
 
-A local-first text shortcut platform that boosts productivity with intelligent text shortcuts. Create, manage, and use custom shortcuts across all your favorite apps and websites for instantaneous, offline-capable text expansion.
+A smart text shortcut platform that boosts productivity with intelligent text shortcuts. Create shortcuts on our website, sync them to your browser extension, and use them anywhere by typing your shortcut and pressing Ctrl+Shift+Space.
 
 ## Overview
 
-CutFast is designed to enhance productivity by providing a seamless text expansion experience. The platform separates the operational path (typing and expanding text) from the synchronization path (background sync), ensuring that text expansion is never blocked by network latency.
+CutFast is designed to enhance productivity by providing a seamless text expansion experience. Create shortcuts on our website, sync them automatically to your browser extension, and use them anywhere by typing your shortcut and pressing Ctrl+Shift+Space.
 
 Key components:
 - **Web Dashboard**: Next.js-based management interface for CRUD operations on shortcuts and categories
 - **Browser Extension**: Vite + React extension that handles text detection and expansion
-- **Local Storage**: Dexie-powered IndexedDB for offline functionality
+- **Local Storage**: Dexie-powered IndexedDB for storing synced shortcuts locally
+- **Server Storage**: PostgreSQL database for persistent shortcut storage and synchronization
 - **Authentication**: Dual authentication strategy using better-auth for both web and extension access
 
 ## Features
 
 ### Core Features
-- **Instant Text Expansion**: Trigger shortcuts with patterns like `/msg-2` for immediate replacement
-- **Offline Capability**: Local database ensures functionality without internet connection
-- **Cross-Platform**: Works across all websites and apps that support text input
+- **Instant Text Expansion**: Trigger shortcuts with Ctrl+Shift+Space for immediate replacement
+- **Local Storage**: Shortcuts stored locally in browser for fast access once synced
+- **Server Sync**: Automatic synchronization between web dashboard and browser extension
+- **Cross-Platform**: Works in any browser on desktop and laptop computers
 - **Secure Sync**: Background synchronization with row-level security
 - **User Management**: Categories and shortcuts with per-user scoping
 - **Modern UI**: Clean, responsive dashboard built with Next.js and React
@@ -62,11 +64,11 @@ The system is organized into four logical planes:
 
 CutFast is available for multiple browsers:
 
+- **Firefox**: [Official Mozilla Add-ons Store](https://addons.mozilla.org/en-US/firefox/addon/cutfast) - Fully approved and available
 - **Microsoft Edge**: [Official Add-ons Store](https://microsoftedge.microsoft.com/addons/detail/cutfast-text-shortcuts/iijjcflafgeppdafiighhcpobahkcpdl) - Fully approved and available
-- **Firefox**: Download from [GitHub Releases](https://github.com/HimanshuKumarDutt094/cutfast/releases)
 - **Chrome**: Download from [GitHub Releases](https://github.com/HimanshuKumarDutt094/cutfast/releases)
 
-For Microsoft Edge users, simply visit the link above and click "Get" to install. For other browsers, follow the installation instructions in the releases.
+For Firefox and Microsoft Edge users, simply visit the links above and click "Add to Firefox" or "Get" to install. For Chrome users, follow the installation instructions in the releases.
 
 ## Getting Started
 
@@ -269,7 +271,6 @@ This project is open source. See LICENSE file for details.
 
 **Himanshu Kumar Dutt**
 
-- **GitHub**: [github.com/HimanshuKumarDutt094](https://github.com/HimanshuKumarDutt094)
 - **LinkedIn**: [linkedin.com/in/himanshu-dutt-77](https://linkedin.com/in/himanshu-dutt-77)
-- **Portfolio**: [v0-himanshu-portfolio-peach.vercel.app](https://v0-himanshu-portfolio-peach.vercel.app/)
+
 - **Email**: adasimobenio@gmail.com

@@ -70,33 +70,32 @@ export function ExtensionDownload() {
         <Card className="relative overflow-hidden">
           <CardHeader className="text-center">
             <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-lg bg-orange-100 dark:bg-orange-900/20">
-              <span className="text-2xl font-bold text-orange-600 dark:text-orange-400">🦊</span>
+              <img
+                src="/firefoxbrowser.svg"
+                alt="Firefox"
+                className="h-8 w-8"
+              />
             </div>
             <CardTitle className="text-xl">Firefox Extension</CardTitle>
             <CardDescription>
-              For Firefox, and other Mozilla browsers
+              Official Mozilla Firefox Add-ons Store
             </CardDescription>
           </CardHeader>
           <CardContent className="text-center space-y-4">
-            <Button
-              onClick={() => handleDownload("firefox", getDownloadUrl("firefox"))}
-              disabled={loading || getDownloadUrl("firefox") === "#"}
-              className="w-full"
-              size="lg"
+            <a
+              href="https://addons.mozilla.org/en-US/firefox/addon/cutfast"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="block"
             >
-              <Download className="mr-2 h-4 w-4" />
-              {loading ? "Loading..." : "Download for Firefox"}
-            </Button>
+              <img
+                src="/get-the-addon-small.webp"
+                alt="Get the Firefox Add-on"
+                className="mx-auto h-12 w-auto object-contain"
+              />
+            </a>
 
-            <div className="text-sm text-muted-foreground space-y-2">
-              <p className="font-medium">Installation:</p>
-              <ol className="text-left list-decimal list-inside space-y-1">
-                <li>Download the extension file</li>
-                <li>Open Firefox and go to <code className="bg-muted px-1 py-0.5 rounded text-xs">about:debugging</code></li>
-                <li>Click "This Firefox" → "Load Temporary Add-on"</li>
-                <li>Select the downloaded zip file</li>
-              </ol>
-            </div>
+
           </CardContent>
         </Card>
 
@@ -139,7 +138,11 @@ export function ExtensionDownload() {
         <Card className="relative overflow-hidden">
           <CardHeader className="text-center">
             <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-lg bg-blue-100 dark:bg-blue-900/20">
-              <span className="text-2xl font-bold text-blue-600 dark:text-blue-400">🌐</span>
+              <img
+                src="/microsoftedge-svgrepo-com.svg"
+                alt="Microsoft Edge"
+                className="h-8 w-8"
+              />
             </div>
             <CardTitle className="text-xl">Microsoft Edge</CardTitle>
             <CardDescription>
@@ -147,23 +150,20 @@ export function ExtensionDownload() {
             </CardDescription>
           </CardHeader>
           <CardContent className="text-center space-y-4">
-            <Button
-              onClick={() => window.open("https://microsoftedge.microsoft.com/addons/detail/cutfast-text-shortcuts/iijjcflafgeppdafiighhcpobahkcpdl", "_blank")}
-              className="w-full bg-blue-600 hover:bg-blue-700 text-white"
-              size="lg"
+            <a
+              href="https://microsoftedge.microsoft.com/addons/detail/cutfast-text-shortcuts/iijjcflafgeppdafiighhcpobahkcpdl"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="block"
             >
-              <ExternalLink className="mr-2 h-4 w-4" />
-              Get from Microsoft Edge Add-ons
-            </Button>
+              <img
+                src="/get-from-edge.png"
+                alt="Get from Microsoft Edge Add-ons"
+                className="mx-auto h-12 w-auto object-contain"
+              />
+            </a>
 
-            <div className="text-sm text-muted-foreground space-y-2">
-              <p className="font-medium">Installation:</p>
-              <ol className="text-left list-decimal list-inside space-y-1">
-                <li>Click the button above to visit the Edge Add-ons Store</li>
-                <li>Click "Get" to install the extension</li>
-                <li>The extension will be added to your browser automatically</li>
-              </ol>
-            </div>
+
           </CardContent>
         </Card>
       </div>

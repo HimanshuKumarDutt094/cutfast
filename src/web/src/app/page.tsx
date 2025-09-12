@@ -11,7 +11,7 @@ import {
 } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { api } from "@/trpc/server";
-import { Database, Shield, Smartphone, Zap } from "lucide-react";
+import { Database, Globe, Shield, Zap, } from "lucide-react";
 
 export default async function Home() {
   const signUpStatus = await api.admin.getConfig();
@@ -24,14 +24,14 @@ export default async function Home() {
           <div className="text-center flex flex-col justify-center">
             <Badge variant="secondary" className="mb-4">
               <Zap className="mr-1 h-3 w-3" />
-              Local-First Text Shortcuts
+              Smart Text Shortcuts
             </Badge>
             <h1 className="mb-6 font-bold text-4xl text-foreground sm:text-6xl">
               CutFast
             </h1>
             <p className="mx-auto mb-8 max-w-2xl text-muted-foreground text-xl">
-              Instantaneous, offline-capable text expansion platform. Transform
-              how you write with intelligent shortcuts that work everywhere.
+              Create text shortcuts on our website, sync them to your browser extension,
+              and use them anywhere by typing your shortcut and pressing Ctrl+Shift+Space.
             </p>
 <p className="text-lg lg:text-xl">
             Want to self host your own backend and dashboard ? We have one click deploy to vercel.
@@ -68,7 +68,7 @@ export default async function Home() {
             </CardHeader>
             <CardContent>
               <CardDescription>
-                Instant text expansion with zero network latency. Works offline.
+                Instant text expansion with local processing. No network delay once loaded.
               </CardDescription>
             </CardContent>
           </Card>
@@ -82,7 +82,7 @@ export default async function Home() {
             </CardHeader>
             <CardContent>
               <CardDescription>
-                Your shortcuts stay local. No data sent to external servers.
+                Shortcuts are stored on our servers and synced locally. Use our service or self-host your own.
               </CardDescription>
             </CardContent>
           </Card>
@@ -104,16 +104,44 @@ export default async function Home() {
           <Card className="text-center">
             <CardHeader>
               <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-lg bg-primary/10">
-                <Smartphone className="h-6 w-6 text-primary" />
+                <Globe className="h-6 w-6 text-primary" />
               </div>
               <CardTitle className="text-lg">Cross-Platform</CardTitle>
             </CardHeader>
             <CardContent>
               <CardDescription>
-                Works on any website, any app, any platform.
+                Works in any browser on desktop and laptop computers.
               </CardDescription>
             </CardContent>
           </Card>
+        </div>
+
+        {/* Current Features & Future Plans */}
+        <div className="mb-16 mx-auto max-w-4xl">
+          <div className="bg-muted/30 rounded-lg p-6 border">
+            <h3 className="text-xl font-semibold mb-4 text-center">How It Works</h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 text-sm">
+              <div>
+                <h4 className="font-medium text-foreground mb-2">✅ Current Features</h4>
+                <ul className="space-y-1 text-muted-foreground">
+                  <li>• Create shortcuts on our website</li>
+                  <li>• Sync to browser extension automatically</li>
+                  <li>• Use shortcuts with Ctrl+Shift+Space</li>
+                  <li>• Local storage in browser (IndexedDB)</li>
+                  <li>• Self-host option available</li>
+                </ul>
+              </div>
+              <div>
+                <h4 className="font-medium text-foreground mb-2">🚀 Coming Soon</h4>
+                <ul className="space-y-1 text-muted-foreground">
+                  <li>• Custom keyboard shortcuts</li>
+                  <li>• Website blacklists/whitelists</li>
+                  <li>• Advanced sync options</li>
+                  <li>• Mobile browser support</li>
+                </ul>
+              </div>
+            </div>
+          </div>
         </div>
 
         {/* Auth Section */}
